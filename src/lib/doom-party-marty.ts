@@ -1,3 +1,5 @@
+import { sitePath } from './site-path'
+
 // STBAR border samples from the bundled Doom 1 shareware WAD, outside changing HUD fields.
 const hudSamples = [
   [0, 168, 151], [0, 188, 139],
@@ -65,7 +67,7 @@ export function createPartyMarty(
     buffer = /^[a-z]$/i.test(event.key) ? (buffer + event.key.toLowerCase()).slice(-10) : ''
     if (buffer !== 'partymarty') return
     active = true
-    video.src = '/doom/partymarty.mp4'
+    video.src = sitePath('/doom/partymarty.mp4')
     play()
   }, { signal })
   video.addEventListener('error', () => fail(video.error), { signal })

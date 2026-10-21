@@ -1,5 +1,6 @@
 import { DOOM_SHAREWARE_WAD, validateRuntimeManifest, verifyArtifact, type DoomRuntimeManifest } from './doom-assets'
 import type { DoomKey } from './doom-input'
+import { sitePath } from './site-path'
 
 export interface DoomRuntime {
   key(key: DoomKey, pressed: boolean): void
@@ -21,7 +22,7 @@ export interface DoomRuntimeFactory {
 }
 
 async function fetchBytes(path: string, signal: AbortSignal) {
-  const response = await fetch(path, { signal, cache: 'no-store' })
+  const response = await fetch(sitePath(path), { signal, cache: 'no-store' })
   if (!response.ok) throw new Error(`Required Doom artifact is unavailable: ${path} (HTTP ${response.status}).`)
   return response.arrayBuffer()
 }
@@ -48,7 +49,7 @@ async function importVerifiedAdapter(javascript: ArrayBuffer, signal: AbortSigna
 }
 
 export async function loadDoomRuntime(canvas: HTMLCanvasElement, signal: AbortSignal, base = '/doom', audioContext?: AudioContext, onFrame = () => {}) {
-  const response = await fetch(`${base}/runtime/manifest.json`, { signal, cache: 'no-store' })
+  const response = await fetch(sitePath(`${base}/runtime/manifest.json`), { signal, cache: 'no-store' })
   if (!response.ok) throw new Error('Verified Doom engine artifacts are not installed.')
   const manifest = validateRuntimeManifest(await response.json())
   const [wad, javascript, wasm] = await Promise.all([

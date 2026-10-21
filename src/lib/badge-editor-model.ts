@@ -3,6 +3,7 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
 import { CSS3DObject, CSS3DRenderer } from 'three/addons/renderers/CSS3DRenderer.js'
 import { initBadgeIdleRotation } from './badge-model-idle-rotation'
+import { sitePath } from './site-path'
 
 // Corner radius of the badge model's inner circuit board, in model units (metres).
 const BOARD_CORNER_RADIUS = 0.0037
@@ -320,11 +321,11 @@ export function initBadgeModel(host: HTMLElement, screen: HTMLCanvasElement, but
   fullButton?.addEventListener('click', showFull)
   elements?.zoomIn?.addEventListener('click', zoomIn)
   elements?.zoomOut?.addEventListener('click', zoomOut)
-  const ready = fetch('/simulator/models/github-mona-badge.glb', { signal }).then(async response => {
+  const ready = fetch(sitePath('/simulator/models/github-mona-badge.glb'), { signal }).then(async response => {
     if (!response.ok) throw new Error(`Could not load the badge model (HTTP ${response.status}).`)
     const data = await response.arrayBuffer()
     signal.throwIfAborted()
-    return new GLTFLoader().parseAsync(data, '/simulator/models/')
+    return new GLTFLoader().parseAsync(data, sitePath('/simulator/models/'))
   }).then(gltf => {
     model = gltf.scene
     scene.add(model)
