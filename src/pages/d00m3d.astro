@@ -1,0 +1,93 @@
+---
+import Layout from '@/layouts/Layout.astro'
+import DoomSimulator from '@/components/doom-simulator.astro'
+import UniverseCallout from '@/components/universe-callout.astro'
+import DocumentViewer from '@/components/document-viewer.astro'
+import sharewareLicense from '../../public/doom/licenses/DOOM1-SHAREWARE.txt?raw'
+import engineLicense from '../../public/doom/runtime/COPYING.txt?raw'
+import correspondingSource from '../../public/doom/runtime/SOURCE.md?raw'
+import { CircleCheck } from 'lucide-react'
+import GithubInvertocat from '@/components/github-invertocat.astro'
+---
+
+<Layout title="D00M3D" description="Doom 1 v1.9 shareware running on the Badger display." robots="noindex,nofollow">
+  <section class="doom-layout px-4 py-10 sm:px-8 sm:py-14">
+    <header class="doom-intro">
+      <h1 class="text-4xl text-primary sm:text-5xl">But does it run DOOM?</h1>
+      <p class="mt-4 leading-relaxed text-muted-foreground">Checking a GitHub badge...</p>
+      <p class="mt-4 flex items-center gap-2.5 text-2xl text-primary"><CircleCheck size={24} className="shrink-0" aria-hidden="true" />Of course it does.</p>
+      <UniverseCallout />
+    </header>
+    <DoomSimulator />
+    <div class="doom-notes space-y-8">
+      <div class="text-sm leading-relaxed text-muted-foreground">
+        <p>
+          <strong class="font-mono text-primary">ProTip&trade;:</strong> Click the badge display, then type <code>IDSPISPOPD</code> during gameplay to toggle walking through walls. Doom 1 uses this noclip code instead of <code>IDCLIP</code>.
+          <picture class="ml-1 inline-block align-middle">
+            <source media="(prefers-reduced-motion: reduce)" srcset="/images/mona-mindblown.webp" />
+            <img class="inline-block" src="/images/mona-mindblown.gif" alt="Mindblown Mona" width="32" height="32" loading="lazy" decoding="async" />
+          </picture>
+        </p>
+        <div class="mt-3 flex flex-col items-start gap-2 font-mono text-xs text-primary">
+          <a class="inline-flex items-center gap-2.5 hover:underline" href="https://github.com/id-Software/DOOM/blob/a77dfb96cb91780ca334d0d4cfd86957558007e0/linuxdoom-1.10/st_stuff.c#L426-L431"><GithubInvertocat /><span>View the original noclip source.</span></a>
+        </div>
+      </div>
+      <aside class="doom-asset-policy border-t border-border/40 pt-6">
+        <h2 class="font-mono text-xs uppercase tracking-[0.14em]">Asset policy</h2>
+        <p class="mt-3 text-xs leading-relaxed text-muted-foreground">Includes unmodified Doom 1 v1.9 shareware. Commercial Doom data and Freedoom are not included.</p>
+        <div class="mt-3">
+          <DocumentViewer id="doom-documents" documents={[
+            { title: 'Shareware license', href: '/doom/licenses/DOOM1-SHAREWARE.txt', content: sharewareLicense },
+            { title: 'Engine GPLv2', href: '/doom/runtime/COPYING.txt', content: engineLicense },
+            { title: 'Corresponding source', href: '/doom/runtime/SOURCE.md', content: correspondingSource },
+          ]} />
+        </div>
+        <p class="mt-4 text-[0.6875rem] leading-relaxed text-muted-foreground">© id Software · Unofficial port. Not affiliated with id Software, Bethesda Softworks, or Microsoft.</p>
+      </aside>
+    </div>
+  </section>
+</Layout>
+
+<style>
+  .doom-layout {
+    display: grid;
+    grid-template-areas: 'intro' 'game' 'notes';
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+    align-items: start;
+  }
+  .doom-intro { grid-area: intro; min-width: 0; }
+  .doom-notes { grid-area: notes; min-width: 0; }
+  .doom-asset-policy :global([data-document-viewer] > p) { font-size: 0.6875rem; }
+  .doom-layout :global(#doom-simulator) { grid-area: game; min-width: 0; }
+
+  @media (min-width: 1024px) {
+    :global(body:has(.doom-layout)) {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+      min-height: 0;
+      overflow: hidden;
+    }
+    :global(body:has(.doom-layout) > main) { flex: 1; min-height: 0; }
+    :global(body:has(.doom-layout) > footer) { display: none; }
+    .doom-layout {
+      grid-template-areas: 'intro game' 'notes game';
+      grid-template-columns: 20rem minmax(0, 1fr);
+      grid-template-rows: auto minmax(0, 1fr);
+      height: 100%;
+      padding: 0 0 0 2rem;
+      column-gap: 2.5rem;
+      row-gap: 1.5rem;
+    }
+    .doom-intro { padding-top: 2rem; }
+    .doom-notes {
+      max-height: 100%;
+      overflow-y: auto;
+      padding-bottom: 1.5rem;
+      scrollbar-width: none;
+    }
+    .doom-notes::-webkit-scrollbar { display: none; }
+    .doom-layout :global(#doom-simulator) { height: 100%; }
+  }
+</style>

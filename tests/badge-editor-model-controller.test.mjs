@@ -103,3 +103,16 @@ test('input and backlight changes during loading reach the new model', async () 
   assert.deepEqual(states, [['buttons', 20], ['backlight', 0.5]])
   controller.dispose()
 })
+
+test('display orientation changes during loading reach the new model', async () => {
+  let finish
+  const states = []
+  const controller = createBadgeModelController(() => new Promise(resolve => finish = resolve), () => assert.fail('Unexpected fallback'))
+  controller.start()
+  controller.setDisplayRotated(true)
+  await tick()
+  finish(model({ setDisplayRotated(value) { states.push(value) } }))
+  await tick()
+  assert.deepEqual(states, [true])
+  controller.dispose()
+})

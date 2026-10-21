@@ -6,34 +6,18 @@ import Footer from '@/components/Footer.astro'
 export interface Props {
   title: string
   description?: string
+  robots?: string
 }
 
-const { title, description = 'Badger 2350 hack index: code, hardware notes, examples.' } = Astro.props
+const { title, description = 'Badger 2350 hack index: code, hardware notes, examples.', robots } = Astro.props
 ---
 
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
-    <script is:inline>
-      try {
-        if (localStorage.getItem('badger-theme') === 'light') {
-          document.documentElement.classList.replace('dark', 'light')
-        }
-      } catch {}
-      // Pages restored from the back/forward cache skip this script, so resync with the saved preference.
-      addEventListener('pageshow', (event) => {
-        if (!event.persisted) return
-        let theme
-        try { theme = localStorage.getItem('badger-theme') === 'light' ? 'light' : 'dark' } catch { return }
-        const root = document.documentElement
-        if (root.classList.contains(theme)) return
-        root.classList.toggle('light', theme === 'light')
-        root.classList.toggle('dark', theme === 'dark')
-        dispatchEvent(new CustomEvent('badger-theme-change', { detail: theme }))
-      })
-    </script>
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
+    {robots && <meta name="robots" content={robots} />}
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="generator" content={Astro.generator} />
