@@ -27,6 +27,8 @@ jobs:
           cache: npm
       - name: Install dependencies
         run: npm ci
+      - name: Verify Doom runtime and shareware assets
+        run: npm run verify:doom-assets -- --require
       - name: Build site
         run: npm run build
       - name: Upload artifact
