@@ -1,7 +1,7 @@
 import { Box3, CanvasTexture, DirectionalLight, DoubleSide, HemisphereLight, LinearFilter, Mesh, MeshBasicMaterial, MeshStandardMaterial, NearestFilter, PerspectiveCamera, Raycaster, Scene, SRGBColorSpace, Vector2, Vector3, WebGLRenderer, type Material, type Object3D } from 'three'
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js'
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js'
-import { CSS3DObject, CSS3DRenderer } from 'three/addons/renderers/CSS3DRenderer.js'
+import { displayOverlayMatrix } from './badge-display-overlay'
 import { initBadgeIdleRotation } from './badge-model-idle-rotation'
 import { sitePath } from './site-path'
 
@@ -58,12 +58,7 @@ export function initBadgeModel(host: HTMLElement, screen: HTMLCanvasElement, but
   canvas.setAttribute('role', 'img')
   canvas.setAttribute('aria-label', elements?.canvasLabel ?? 'Interactive 3D badge. Drag to rotate, scroll to zoom. Arrow keys control the badge, Space selects. WASD and J control the gamepad.')
   host.append(canvas)
-  const overlayRenderer = elements?.displayOverlay ? new CSS3DRenderer() : undefined
-  if (overlayRenderer) {
-    Object.assign(overlayRenderer.domElement.style, { position: 'absolute', inset: '0', pointerEvents: 'none' })
-    host.append(overlayRenderer.domElement)
-  }
-  let displayOverlay: CSS3DObject | undefined
+  const displayOverlay = elements?.displayOverlay
   const scene = new Scene()
   const camera = new PerspectiveCamera(35, 1, 0.001, 2)
   const controls = new OrbitControls(camera, canvas)
@@ -112,9 +107,15 @@ export function initBadgeModel(host: HTMLElement, screen: HTMLCanvasElement, but
       if (disposed) return
       try {
         renderer.render(scene, camera)
-        overlayRenderer?.render(scene, camera)
+        renderOverlay()
       } catch (error) { onError(error) }
     })
+  }
+  function renderOverlay() {
+    if (!displayOverlay || !displayMesh || displayOverlay.hidden) return
+    const matrix = displayOverlayMatrix(displayMesh, camera, host.clientWidth, host.clientHeight, displayRotated)
+    displayOverlay.style.visibility = matrix ? 'visible' : 'hidden'
+    if (matrix) displayOverlay.style.transform = `matrix3d(${matrix.elements.join(',')})`
   }
   function updateFrame() {
     context.fillStyle = '#000'
@@ -242,14 +243,12 @@ export function initBadgeModel(host: HTMLElement, screen: HTMLCanvasElement, but
   function setDisplayRotated(value: boolean) {
     if (value === displayRotated) return
     displayRotated = value
-    if (displayOverlay) displayOverlay.rotation.z = value ? Math.PI : 0
     updateFrame()
   }
   const resize = new ResizeObserver(() => {
     if (disposed || !host.clientWidth || !host.clientHeight) return
     try {
       renderer.setSize(host.clientWidth, host.clientHeight, false)
-      overlayRenderer?.setSize(host.clientWidth, host.clientHeight)
       camera.aspect = host.clientWidth / host.clientHeight
       camera.updateProjectionMatrix()
       render()
@@ -337,15 +336,9 @@ export function initBadgeModel(host: HTMLElement, screen: HTMLCanvasElement, but
         object.material = displayMaterial
         object.renderOrder = 10
         displayMesh = object
-        if (elements?.displayOverlay) {
+        if (displayOverlay) {
           object.geometry.computeBoundingBox()
-          const bounds = object.geometry.boundingBox!
-          const size = bounds.getSize(new Vector3())
-          displayOverlay = new CSS3DObject(elements.displayOverlay)
-          displayOverlay.position.copy(bounds.getCenter(new Vector3()))
-          displayOverlay.scale.set(size.x / 640, size.y / 438, 1)
-          displayOverlay.rotation.z = displayRotated ? Math.PI : 0
-          object.add(displayOverlay)
+          host.append(displayOverlay)
         }
       }
       if (materials.some(material => material.transparent)) materials.forEach(material => { material.depthWrite = false })
@@ -387,7 +380,7 @@ export function initBadgeModel(host: HTMLElement, screen: HTMLCanvasElement, but
     view()
     if (rotated) applyRotation()
     renderer.render(scene, camera)
-    overlayRenderer?.render(scene, camera)
+    renderOverlay()
     if (disposed || signal.aborted) return
     host.dataset.state = 'ready'
     status.hidden = true
@@ -478,7 +471,7 @@ export function initBadgeModel(host: HTMLElement, screen: HTMLCanvasElement, but
       disposeModel()
       displayMaterial.dispose()
       renderer.dispose()
-      overlayRenderer?.domElement.remove()
+      if (displayOverlay?.parentElement === host) displayOverlay.remove()
       canvas.remove()
     },
   }

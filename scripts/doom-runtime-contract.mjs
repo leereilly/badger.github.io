@@ -23,7 +23,7 @@ export function validateApproval(value) {
     || approval.engineVersion !== '0.0.1'
     || revision !== SOURCE_REVISION
     || approval.upstreamSourceUrl !== SOURCE_URL
-    || approval.emscriptenVersion !== 'upstream 2023 build'
+    || approval.emscriptenVersion !== '3.1.45'
     || approval.adapterContractVersion !== ADAPTER_CONTRACT_VERSION) {
     throw new Error('Approved runtime metadata does not satisfy the pinned provenance contract.')
   }

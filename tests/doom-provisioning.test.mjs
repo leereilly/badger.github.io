@@ -39,7 +39,7 @@ test('runtime preparation rejects artifacts that do not match separate approval 
       engineVersion: '0.0.1',
       upstreamSourceRevision: 'a77edfd8bbc7e66b119a49c954f69a8b24e59206',
       upstreamSourceUrl: 'https://github.com/Saketh-Chandra/doom-wasm-pwa/tree/a77edfd8bbc7e66b119a49c954f69a8b24e59206',
-      emscriptenVersion: 'upstream 2023 build',
+      emscriptenVersion: '3.1.45',
       adapterContractVersion: 1,
       javascript: { ...record('/doom/runtime/doom.mjs', files.javascript), sha256: '0'.repeat(64) },
       wasm: record('/doom/runtime/doom.wasm', files.wasm),
@@ -89,7 +89,7 @@ test('required verification rejects a self-asserted public manifest without sepa
 
 test('deployment verifies committed pinned assets before building', () => {
   assert.match(runtimeBuild, /a77edfd8bbc7e66b119a49c954f69a8b24e59206/)
-  assert.match(runtimeBuild, /f8670d5e86cc7a96426b56da7a164b46473879f2338f2fe24c192cb1628a30b1/)
+  assert.match(runtimeBuild, /a5a10b9bc2ad755f068e4ed9e3556caa44d82a2d2f50d61139e6f0903c69f87f/)
   assert.match(runtimeBuild, /1d7d43be501e67d927e415e0b8f3e29c3bf33075e859721816f652a526cac771/)
   assert.match(runtimeBuild, /postMainLoop\(\)/)
   assert.match(runtimeBuild, /preserveDrawingBuffer = true/)

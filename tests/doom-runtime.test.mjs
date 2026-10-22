@@ -8,6 +8,68 @@ import { build } from 'esbuild'
 const compiled = await build({ entryPoints: [fileURLToPath(new URL('../src/lib/doom-runtime.ts', import.meta.url))], bundle: true, format: 'esm', platform: 'node', write: false })
 const { loadDoomRuntime } = await import(`data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`)
 
+test('bundled engine enables Doom music with the built-in OPL synthesizer', async () => {
+  const adapter = await readFile(new URL('../public/doom/runtime/doom.mjs', import.meta.url), 'utf8')
+  const arguments_ = adapter.match(/callMain\(\[([\s\S]*?)\]\)/)[1]
+  assert.doesNotMatch(arguments_, /-nomusic|-nosound/)
+  const config = JSON.parse(adapter.match(/FS\.createDataFile\('\/', 'default\.cfg', ("(?:[^"\\]|\\.)*")/)[1])
+  assert.match(config, /^snd_musicdevice\s+3$/m)
+  assert.match(config, /^music_volume\s+[1-9]\d*$/m)
+})
+
+test('adapter shares the unlocked audio context and pauses music with the game', async () => {
+  const adapter = await readFile(new URL('../public/doom/runtime/doom.mjs', import.meta.url), 'utf8')
+  const engineStart = adapter.indexOf('\nvar Module = typeof Module')
+  assert.ok(engineStart > 0)
+  const stubbed = `${adapter.slice(0, engineStart)}
+    var FS = { createDataFile() {}, mkdir() {} }
+    var Browser = { mainLoop: {
+      func() {},
+      pause() { onFrame('pause') },
+      resume() { onFrame('resume') },
+    } }
+    Module.preRun()
+    onFrame({
+      audioContext: Module.SDL2.audioContext,
+      frame() {
+        if (Module.preMainLoop?.() === false) return
+        onFrame('native-frame')
+        Module.postMainLoop()
+      },
+    })
+    resolve(api)
+  })
+}`
+  const { createDoomRuntime } = await import(`data:text/javascript;base64,${Buffer.from(stubbed).toString('base64')}`)
+  const events = []
+  const audioContext = {
+    state: 'running',
+    async suspend() { events.push('suspend'); this.state = 'suspended' },
+    async resume() { events.push('resume-audio'); this.state = 'running' },
+  }
+  const runtime = await createDoomRuntime({
+    canvas: { id: 'canvas' },
+    audioContext,
+    onFrame: event => events.push(event ?? 'draw'),
+  })
+  const loop = events.shift()
+  assert.equal(loop.audioContext, audioContext)
+  loop.frame()
+  runtime.pause()
+  runtime.pause()
+  loop.frame()
+  assert.equal(audioContext.state, 'suspended')
+  runtime.resume()
+  runtime.resume()
+  loop.frame()
+  assert.equal(audioContext.state, 'running')
+  runtime.dispose()
+  runtime.resume()
+  loop.frame()
+  assert.equal(audioContext.state, 'suspended')
+  assert.deepEqual(events, ['native-frame', 'draw', 'suspend', 'resume-audio', 'native-frame', 'draw', 'suspend', 'pause'])
+})
+
 test('bundled engine binds single-tap fire to Ctrl and double-tap use to Space', async () => {
   const adapter = await readFile(new URL('../public/doom/runtime/doom.mjs', import.meta.url), 'utf8')
   const config = JSON.parse(adapter.match(/FS\.createDataFile\('\/', 'default\.cfg', ("(?:[^"\\]|\\.)*")/)[1])
@@ -52,7 +114,7 @@ test('executes the verified JavaScript bytes once and supplies the exact verifie
     engineVersion: '0.0.1',
     upstreamSourceRevision: 'a77edfd8bbc7e66b119a49c954f69a8b24e59206',
     upstreamSourceUrl: 'https://github.com/Saketh-Chandra/doom-wasm-pwa/tree/a77edfd8bbc7e66b119a49c954f69a8b24e59206',
-    emscriptenVersion: 'upstream 2023 build',
+    emscriptenVersion: '3.1.45',
     adapterContractVersion: 1,
     license: { path: '/doom/runtime/COPYING.txt', size: 1, sha256: 'a'.repeat(64) },
     correspondingSource: { path: '/doom/runtime/SOURCE.md', size: 1, sha256: 'a'.repeat(64) },

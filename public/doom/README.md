@@ -31,8 +31,11 @@ Doom:
   `Saketh-Chandra/doom-wasm-pwa@a77edfd8bbc7e66b119a49c954f69a8b24e59206`
 
 `runtime/doom.mjs` embeds the reviewed Emscripten loader and adds the local
-adapter required by the badge texture/input APIs. `runtime/doom.wasm` is the
-reviewed upstream binary. The GPLv2 text is retained in
+adapter required by the badge texture/input APIs. `runtime/doom.wasm` is rebuilt
+with Emscripten 3.1.45 and `runtime/OPL-WEBAUDIO.patch` to let the built-in OPL
+music synthesizer initialize without blocking WebAudio. Music starts after the
+first user input and pauses with the game, including while YouTube is open.
+The GPLv2 text is retained in
 `runtime/COPYING.txt`; exact source and rebuild information is in
 `runtime/SOURCE.md`.
 
@@ -53,8 +56,8 @@ embedded in the rotated 3D badge. Keyboard arrow keys always retain viewer-relat
 
 ## Rebuilding the adapter
 
-Obtain the exact reviewed upstream files and the unmodified shareware WAD, then
-run:
+Rebuild the patched engine using `runtime/SOURCE.md`, obtain the pinned original
+configuration and unmodified shareware WAD, then run:
 
 ```sh
 npm run build:doom-runtime -- \

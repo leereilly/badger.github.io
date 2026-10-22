@@ -8,7 +8,7 @@ export const DOOM_SHAREWARE_WAD = {
 export const DOOM_RUNTIME = {
   engine: 'WebSockets Doom (Chocolate Doom port)',
   version: '0.0.1',
-  emscripten: 'upstream 2023 build',
+  emscripten: '3.1.45',
   sourceRevision: 'a77edfd8bbc7e66b119a49c954f69a8b24e59206',
   sourceUrl: 'https://github.com/Saketh-Chandra/doom-wasm-pwa/tree/a77edfd8bbc7e66b119a49c954f69a8b24e59206',
   adapterVersion: 1,
