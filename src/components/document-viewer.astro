@@ -3,7 +3,7 @@ import { FileText, X } from 'lucide-react'
 
 interface Props {
   id: string
-  documents: { title: string; href: string; content: string }[]
+  documents: { title: string; label?: string; href: string; content: string }[]
 }
 
 const { id, documents } = Astro.props
@@ -11,10 +11,10 @@ const { id, documents } = Astro.props
 
 <div data-document-viewer>
   <p class="font-mono text-xs leading-relaxed text-muted-foreground">
-    {documents.map(({ title, href }, index) => (
+    {documents.map(({ title, label, href }, index) => (
       <>
         {index > 0 && ' · '}
-        <a class="text-primary hover:underline" href={href} data-document-open={index} aria-haspopup="dialog" aria-controls={id}>{title}</a>
+        <a class="text-primary hover:underline" href={href} data-document-open={index} aria-label={label ? title : undefined} aria-haspopup="dialog" aria-controls={id}>{label ?? title}</a>
       </>
     ))}
   </p>
@@ -75,7 +75,7 @@ const { id, documents } = Astro.props
       link.addEventListener('click', event => {
         if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
         event.preventDefault()
-        title.textContent = link.textContent
+        title.textContent = link.getAttribute('aria-label') || link.textContent
         original.href = link.href
         path.textContent = new URL(link.href).pathname
         for (const panel of panels) panel.hidden = panel.dataset.documentPanel !== link.dataset.documentOpen

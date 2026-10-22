@@ -1,0 +1,59 @@
+---
+import { Download } from 'lucide-react'
+import DocumentViewer from '@/components/document-viewer.astro'
+import { buttonVariants } from '@/components/ui/button'
+import { cn } from '@/lib/utils'
+import { sitePath } from '@/lib/site-path'
+
+const instructions = `This is standalone Doom firmware, not a MonaOS app. Flashing replaces the firmware currently running on your badge.
+
+Back up your badge files before flashing.
+
+1. Download doom.uf2 and connect your badge to your computer with a USB data cable.
+
+2. Hold HOME, tap RESET once, then release HOME when the RP2350 drive appears in Finder or File Explorer. The badge screen will go dark.
+
+3. Copy doom.uf2 onto the RP2350 drive, not the BADGER drive. Wait for flashing to finish. The badge reboots automatically into Doom.
+
+To return to MonaOS, download the firmware from https://github.com/badger/home/releases and repeat the flashing steps with that .uf2 file. Check the release notes first: factory-restoration images delete the badge filesystem.`
+---
+
+<div class="doom-download mt-3 flex items-center gap-2">
+  <a
+    href={sitePath('/doom/downloads/doom.uf2')}
+    download="doom.uf2"
+    class={cn(buttonVariants({ variant: 'outline' }), 'h-auto min-h-10 min-w-0 gap-2.5 whitespace-normal py-2 text-xs uppercase tracking-[0.12em]')}
+  >
+    <Download aria-hidden="true" />
+    Download for your badge
+  </a>
+  <DocumentViewer id="doom-install" documents={[{
+    title: 'Install Doom on your badge',
+    label: '?',
+    href: sitePath('/get-started#flash'),
+    content: instructions,
+  }]} />
+</div>
+
+<style>
+  .doom-download :global([data-document-viewer]) { flex-shrink: 0; }
+  .doom-download :global([data-document-open]) {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.75rem;
+    height: 2.75rem;
+    border: 1px solid hsl(var(--border) / 0.4);
+    border-radius: 0.5rem;
+    transition: border-color 150ms, background-color 150ms;
+  }
+  .doom-download :global([data-document-open]:hover) {
+    border-color: hsl(var(--primary) / 0.5);
+    background: hsl(var(--primary) / 0.05);
+    text-decoration: none;
+  }
+  .doom-download :global([data-document-open]:focus-visible) {
+    outline: 2px solid hsl(var(--primary));
+    outline-offset: 2px;
+  }
+</style>

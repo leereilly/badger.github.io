@@ -2,6 +2,7 @@
 import Layout from '@/layouts/Layout.astro'
 import DoomSimulator from '@/components/doom-simulator.astro'
 import UniverseCallout from '@/components/universe-callout.astro'
+import DoomDownload from '@/components/doom-download.astro'
 import DocumentViewer from '@/components/document-viewer.astro'
 import sharewareLicense from '../../public/doom/licenses/DOOM1-SHAREWARE.txt?raw'
 import engineLicense from '../../public/doom/runtime/COPYING.txt?raw'
@@ -18,6 +19,7 @@ import { sitePath } from '@/lib/site-path'
       <p class="mt-4 leading-relaxed text-muted-foreground">Checking a GitHub badge...</p>
       <p class="mt-4 flex items-center gap-2.5 text-2xl text-primary"><CircleCheck size={24} className="shrink-0" aria-hidden="true" />Of course it does.</p>
       <UniverseCallout />
+      <DoomDownload />
     </header>
     <DoomSimulator />
     <div class="doom-notes space-y-8">
