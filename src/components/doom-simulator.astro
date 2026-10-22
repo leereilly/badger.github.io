@@ -31,9 +31,12 @@ import DoomVideo from './doom-video.astro'
     </div>
 
     <div class="doom-inputs mt-4">
-      <p class="mx-auto max-w-3xl text-center font-mono text-[0.7rem] leading-relaxed text-muted-foreground">
-        Keyboard: arrows move · Ctrl/J fire · Space/K use · Shift/Alt strafe · Escape menu · Enter confirm. Drag outside controls to rotate the badge. Scroll or +/− to zoom.
-      </p>
+      <details class="doom-controls mx-auto max-w-3xl font-mono text-xs text-muted-foreground">
+        <summary class="cursor-pointer py-2 text-center uppercase tracking-[0.12em] hover:text-foreground">Controls</summary>
+        <p class="mt-2 text-center text-[0.7rem] leading-relaxed">
+          Keyboard: arrows move · Ctrl/J fire · Space/K use · Shift/Alt strafe · Escape menu · Enter confirm. Drag outside controls to rotate the badge. Scroll or +/− to zoom.
+        </p>
+      </details>
       <DoomBadgeLinks />
     </div>
   </div>

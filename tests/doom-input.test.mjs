@@ -40,10 +40,11 @@ test('each arrow press reaches the engine once rather than skipping a menu optio
   ])
 })
 
-test('keyboard activation of badge links is not captured as Doom input', t => {
+test('keyboard activation of badge links and disclosure summaries is not captured as Doom input', t => {
   const previous = new Map()
   class Element extends EventTarget {
-    closest(selector) { return selector === 'button, a[href]' ? this : null }
+    constructor(tag) { super(); this.tag = tag }
+    closest(selector) { return selector.split(', ').includes(this.tag) ? this : null }
   }
   for (const [name, value] of Object.entries({ Element, window: new EventTarget() })) {
     previous.set(name, Object.getOwnPropertyDescriptor(globalThis, name))
@@ -55,17 +56,22 @@ test('keyboard activation of badge links is not captured as Doom input', t => {
       else delete globalThis[name]
     }
   })
-  const link = new Element()
   const changes = []
-  const dispose = initDoomKeyboard(link, new DoomInput((...args) => changes.push(args)))
-  for (const code of ['Enter', 'Space']) {
-    const event = new Event('keydown', { cancelable: true })
-    Object.defineProperty(event, 'code', { value: code })
-    link.dispatchEvent(event)
-    assert.equal(event.defaultPrevented, false)
+  for (const tag of ['button', 'a[href]', 'summary']) {
+    const target = new Element(tag)
+    const dispose = initDoomKeyboard(target, new DoomInput((...args) => changes.push(args)))
+    for (const code of ['Enter', 'Space']) {
+      for (const type of ['keydown', 'keypress', 'keyup']) {
+        const event = new Event(type, { cancelable: true })
+        Object.defineProperty(event, 'code', { value: code })
+        target.dispatchEvent(event)
+        assert.equal(event.defaultPrevented, false, `${tag}: ${type} ${code}`)
+        assert.equal(event.cancelBubble, true, `${tag}: ${type} ${code} must not reach SDL`)
+      }
+    }
+    dispose()
   }
   assert.deepEqual(changes, [])
-  dispose()
 })
 
 test('Doom keyboard controls are independent from MicroPython mappings', () => {

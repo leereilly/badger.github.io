@@ -118,8 +118,11 @@ export function initDoomKeyboard(scope: HTMLElement, input: DoomInput) {
       return
     }
     const target = event.target instanceof Element ? event.target : null
+    if (target?.closest('button, a[href], summary') && ['Space', 'Enter'].includes(event.code)) {
+      event.stopPropagation()
+      return
+    }
     if (event.type !== 'keydown' || event.metaKey || event.isComposing || target?.closest('input, textarea, select, [contenteditable="true"], [role="textbox"]')) return
-    if (target?.closest('button, a[href]') && ['Space', 'Enter'].includes(event.code)) return
     const key = doomKey(event)
     if (!key) return
     held.set(source, key)
@@ -130,11 +133,13 @@ export function initDoomKeyboard(scope: HTMLElement, input: DoomInput) {
   }
   const clear = () => { held.clear(); input.clear() }
   scope.addEventListener('keydown', keyboard)
+  scope.addEventListener('keypress', keyboard)
   scope.addEventListener('keyup', keyboard)
   window.addEventListener('blur', clear)
   return () => {
     clear()
     scope.removeEventListener('keydown', keyboard)
+    scope.removeEventListener('keypress', keyboard)
     scope.removeEventListener('keyup', keyboard)
     window.removeEventListener('blur', clear)
   }

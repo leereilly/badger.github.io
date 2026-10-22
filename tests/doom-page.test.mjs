@@ -83,14 +83,15 @@ test('secret Doom route is noindex and absent from navigation and footer', () =>
   assert.doesNotMatch(footer, /\/d00m3d/)
 })
 
-test('Doom intro links to virtual Universe registration before the game', async () => {
+test('Doom intro keeps the punchline and links to Universe on demand', async () => {
   const callout = await readFile(new URL('../src/components/universe-callout.astro', import.meta.url), 'utf8')
   assert.match(page, /But does it run DOOM\?<\/h1>/)
-  assert.match(page, /Checking a GitHub badge\.\.\.<\/p>/)
+  assert.match(page, /On a GitHub badge\? Seriously\?<\/p>/)
   assert.match(page, /Of course it does\.<\/p>\s*<UniverseCallout \/>\s*<DoomDownload \/>\s*<\/header>\s*<DoomSimulator \/>/)
   assert.doesNotMatch(page, /Secret editor route/)
   assert.ok(callout.includes('href="https://githubuniverse.com/?utm_source=GitHub&utm_medium=Site&utm_campaign=virtual_badge_uni_26"'))
-  assert.match(callout, /Register virtually \/ watch on demand/)
+  assert.match(callout, /Missed the action\? Catch it on demand\./)
+  assert.doesNotMatch(callout, /Register virtually/)
   assert.match(callout, /Watch GitHub Universe/)
 })
 
@@ -99,9 +100,10 @@ test('badge firmware download follows Universe with accessible installation help
   const viewer = await readFile(new URL('../src/components/document-viewer.astro', import.meta.url), 'utf8')
   assert.match(download, /href=\{sitePath\('\/doom\/downloads\/doom\.uf2'\)\}/)
   assert.match(download, /download="doom\.uf2"/)
-  assert.match(download, /Download for your badge/)
+  assert.match(download, /Get DOOM for your badge/)
   assert.match(download, /<DocumentViewer id="doom-install"/)
-  assert.match(download, /title: 'Install Doom on your badge',\s*label: '\?'/)
+  assert.match(download, /title: 'Install Doom on your badge',\s*label: 'Installation help'/)
+  assert.doesNotMatch(download, /label: '\?'/)
   assert.match(download, /Hold HOME, tap RESET once/)
   assert.match(download, /RP2350 drive, not the BADGER drive/)
   assert.match(download, /Flashing replaces the firmware/)
@@ -122,16 +124,31 @@ test('bottom link list is removed while video return controls remain available',
   assert.match(links, /data-doom-video-close/)
 })
 
-test('Doom page explains the Doom 1 noclip code and links to its original source', () => {
-  assert.match(page, /ProTip&trade;:/)
-  assert.match(page, /<code>IDSPISPOPD<\/code> during gameplay/)
-  assert.ok(page.includes('href="https://github.com/id-Software/DOOM/blob/a77dfb96cb91780ca334d0d4cfd86957558007e0/linuxdoom-1.10/st_stuff.c#L426-L431"'))
-  assert.doesNotMatch(page, /Mindblown Mona by GitHub on GIPHY|https:\/\/giphy\.com/)
-  assert.match(page, /src=\{sitePath\('\/images\/mona-mindblown\.gif'\)\}/)
-  assert.match(page, /media="\(prefers-reduced-motion: reduce\)" srcset=\{sitePath\('\/images\/mona-mindblown\.webp'\)\}/)
-  assert.match(page, /<code>IDCLIP<\/code>\.\s*<picture/)
-  assert.match(page, /<\/picture>\s*<\/p>\s*<div class="[^"]*flex-col/)
-  assert.match(page, /<GithubInvertocat \/><span>View the original noclip source\.<\/span>/)
+test('Doom tips rotate on page load with a short noclip instruction and separate source link', async () => {
+  const tips = await readFile(new URL('../src/components/doom-pro-tip.astro', import.meta.url), 'utf8')
+  assert.match(page, /<DoomProTip \/>/)
+  assert.match(tips, /Once the game has started, click the badge screen and type/)
+  assert.match(tips, /code: 'IDSPISPOPD'/)
+  assert.match(tips, /to walk through walls\./)
+  assert.ok(tips.includes('https://github.com/id-Software/DOOM/blob/a77dfb96cb91780ca334d0d4cfd86957558007e0/linuxdoom-1.10/st_stuff.c#L426-L431'))
+  assert.match(tips, /sessionStorage\.getItem\('doom-tip'\)/)
+  assert.match(tips, /sessionStorage\.setItem\('doom-tip'/)
+  assert.doesNotMatch(tips, /setInterval|mona-mindblown/)
+})
+
+test('legal notices and keyboard controls use collapsed native disclosures', async () => {
+  const legal = await readFile(new URL('../src/components/doom-legal.astro', import.meta.url), 'utf8')
+  assert.match(page, /<DoomLegal \/>/)
+  assert.match(legal, /<details>/)
+  assert.match(legal, /The boring legal stuff/)
+  assert.match(legal, /© id Software/)
+  assert.match(legal, /Not affiliated with id Software, Bethesda Softworks, or Microsoft/)
+  assert.match(legal, /Shareware license/)
+  assert.match(legal, /Engine GPLv2/)
+  assert.match(legal, /Corresponding source/)
+  assert.match(component, /<details class="doom-controls[^"]*">/)
+  assert.match(component, /<summary[^>]*>Controls<\/summary>/)
+  assert.doesNotMatch(`${legal}\n${component}`, /<details[^>]*\bopen\b/)
 })
 
 test('Doom starts with the complete badge visible rather than screen zoom', () => {
@@ -143,7 +160,6 @@ test('Doom omits the bottom control buttons and asset checksum details', () => {
   assert.doesNotMatch(component, /data-doom-button|doom-key|Doom badge controls/)
   assert.doesNotMatch(page, /SHA-256|4,196,020|1d7d43be501e67d927/)
   assert.match(page, /Doom 1 v1\.9 shareware/)
-  assert.match(page, /Commercial Doom data and Freedoom are not included/)
 })
 
 test('page accurately names shareware and exposes the complete control set', () => {
