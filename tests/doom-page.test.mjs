@@ -69,7 +69,10 @@ const [{ doomRotation }, { badgeDoomKey, doomKey }] = await Promise.all([
   compileModule('../src/lib/doom-input.ts'),
 ])
 
-const page = await readFile(new URL('../src/pages/d00m3d.astro', import.meta.url), 'utf8')
+const page = await readFile(new URL('../src/pages/virtual.astro', import.meta.url), 'utf8')
+test('sharing follows the pro tip rather than appearing above the game', () => {
+  assert.match(page, /<DoomProTip\s*\/>\s*<DoomShare\s*\/>/)
+})
 const component = await readFile(new URL('../src/components/doom-simulator.astro', import.meta.url), 'utf8')
 const navigation = await readFile(new URL('../src/components/app-navigation.tsx', import.meta.url), 'utf8')
 const footer = await readFile(new URL('../src/components/Footer.astro', import.meta.url), 'utf8')
@@ -79,8 +82,8 @@ const readme = await readFile(new URL('../public/doom/README.md', import.meta.ur
 
 test('secret Doom route is noindex and absent from navigation and footer', () => {
   assert.match(page, /robots="noindex,nofollow"/)
-  assert.doesNotMatch(navigation, /\/d00m3d/)
-  assert.doesNotMatch(footer, /\/d00m3d/)
+  assert.doesNotMatch(navigation, /\/virtual/)
+  assert.doesNotMatch(footer, /\/virtual/)
 })
 
 test('Doom intro keeps the punchline and links to Universe virtual registration and on demand', async () => {
@@ -124,7 +127,7 @@ test('bottom link list is removed while video return controls remain available',
   assert.match(links, /data-doom-video-close/)
 })
 
-test('Doom keeps only the noclip protip with Monamoji and a separate source link', async () => {
+test('Doom starts with the noclip protip and includes contextual avatar hints', async () => {
   const tips = await readFile(new URL('../src/components/doom-pro-tip.astro', import.meta.url), 'utf8')
   assert.match(page, /<DoomProTip \/>/)
   assert.match(tips, /Once the game has started, click the badge screen and type/)
@@ -135,7 +138,11 @@ test('Doom keeps only the noclip protip with Monamoji and a separate source link
   assert.match(tips, /sitePath\('\/images\/mona-mindblown\.webp'\)/)
   assert.match(tips, /sitePath\('\/images\/mona-mindblown\.gif'\)/)
   assert.match(tips, /alt="Mindblown Mona" width="32" height="32"/)
-  assert.doesNotMatch(tips, /<script>|sessionStorage|\shidden(?:=|\s|>)|Use the arrow keys|Knee-Deep in the Dead|lower right physical button/)
+  assert.match(tips, /Explore this and other cheat codes in the original source code/)
+  assert.match(tips, /data-doom-tip-default/)
+  assert.match(tips, /data-doom-tip-discover hidden/)
+  assert.match(tips, /data-doom-tip-change hidden/)
+  assert.doesNotMatch(tips, /sessionStorage|Use the arrow keys|Knee-Deep in the Dead|lower right physical button/)
 })
 
 test('legal notices and keyboard controls use collapsed native disclosures', async () => {
@@ -160,6 +167,7 @@ test('Doom starts with the complete badge visible rather than screen zoom', () =
 
 test('Doom omits the bottom control buttons and asset checksum details', () => {
   assert.doesNotMatch(component, /data-doom-button|doom-key|Doom badge controls/)
+  assert.doesNotMatch(component, /DoomAvatarControls|data-doom-avatar-(?:form|status)/)
   assert.doesNotMatch(page, /SHA-256|4,196,020|1d7d43be501e67d927/)
   assert.match(page, /Doom 1 v1\.9 shareware/)
 })
@@ -213,6 +221,7 @@ test('rotation remaps model-relative inputs without changing fixed controls', as
       fillRect() {},
       fillText() {},
       drawImage() {},
+      getImageData: () => ({ data: new Uint8ClampedArray(320 * 32 * 4) }),
     }),
   })
   const runtimeCanvas = Object.assign(new Element(), {
@@ -292,8 +301,17 @@ test('rotation remaps model-relative inputs without changing fixed controls', as
     dispose() {},
   }
   const { initDoomPage } = await compileDoomPage()
+  const messages = []
+  const originalInfo = console.info
+  console.info = (...args) => messages.push(args)
+  t.after(() => { console.info = originalInfo })
   const page = initDoomPage(root)
   await page.start()
+  assert.deepEqual(messages, [[
+    '%cNot-so-secret cheat code:%c Type @[YOUR-GITHUB-USERNAME] and then ENTER for a surprise.',
+    'font-weight: bold',
+    'font-weight: normal',
+  ]])
   assert.equal(elements.get('[data-doom-status]').hidden, true)
   assert.equal(document.title, 'D00M3D')
   page.key('ControlLeft', true)

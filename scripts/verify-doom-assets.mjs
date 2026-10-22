@@ -14,7 +14,7 @@ const installed = await Promise.all([wadPath, manifestPath].map(exists))
 
 if (!installed.some(Boolean)) {
   if (required) fail('Doom runtime is enabled but approved engine artifacts and DOOM1.WAD are missing.')
-  else console.log('Doom assets are not installed; /d00m3d will report the blocker. Development verification passed.')
+  else console.log('Doom assets are not installed; /virtual will report the blocker. Development verification passed.')
 } else if (!installed.every(Boolean)) {
   fail('Doom asset installation is incomplete: DOOM1.WAD and runtime/manifest.json must be supplied together.')
 } else {

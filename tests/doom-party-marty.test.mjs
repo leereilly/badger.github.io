@@ -8,7 +8,42 @@ const compiled = await build({
   entryPoints: [fileURLToPath(new URL('../src/lib/doom-party-marty.ts', import.meta.url))],
   bundle: true, format: 'esm', platform: 'node', write: false,
 })
-const { createPartyMarty, hasDoomHud } = await import(`data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`)
+const { createPartyMarty, hasDoomHud, createDoomPowerMode } = await import(`data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`)
+
+test('avatar and Party Marty share an idempotent power mode with repeated ammo refills', t => {
+  class KeyboardEvent extends Event {
+    constructor(type, options) {
+      super(type)
+      for (const [key, value] of Object.entries(options)) Object.defineProperty(this, key, { value })
+    }
+  }
+  const previous = new Map()
+  const document = new EventTarget()
+  for (const [key, value] of Object.entries({ KeyboardEvent, document })) {
+    previous.set(key, Object.getOwnPropertyDescriptor(globalThis, key))
+    Object.defineProperty(globalThis, key, { configurable: true, writable: true, value })
+  }
+  t.after(() => {
+    for (const [key, descriptor] of previous) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor)
+      else delete globalThis[key]
+    }
+  })
+  const keys = []
+  document.addEventListener('keydown', event => keys.push(event.key))
+  const power = createDoomPowerMode()
+  power.activate()
+  for (let now = 0; now < 1000; now += 60) power.render(false, now)
+  assert.deepEqual(keys, [])
+  for (let now = 1000; now < 2000; now += 60) power.render(true, now)
+  assert.equal(keys.join(''), 'iddqdidkfa')
+  power.activate()
+  power.activate()
+  for (let now = 6000; now < 6500; now += 60) power.render(true, now)
+  assert.equal(keys.join(''), 'iddqdidkfaidkfa')
+  for (let now = 11000; now < 12000; now += 60) power.render(false, now)
+  assert.equal(keys.join(''), 'iddqdidkfaidkfa', 'Ammo refills must not send cheat keys outside gameplay')
+})
 
 async function hudContext() {
   const wad = await readFile(new URL('../public/doom/DOOM1.WAD', import.meta.url))
@@ -118,6 +153,11 @@ test('Party Marty is typed once, replaces only the HUD face, grants god mode, an
   context.data.fill(0)
   party.render(context, 10000)
   assert.equal(context.draws.length, draws)
+  party.setFaceEnabled(false)
+  assert.equal(pauses, 2)
+  typed('partymarty')
+  assert.equal(plays, 3)
+  assert.equal(keys.join('').match(/iddqd/g).length, 1)
   party.dispose()
   abort.abort()
   assert.equal(video.src, undefined)

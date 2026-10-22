@@ -5,9 +5,12 @@ import UniverseCallout from '@/components/universe-callout.astro'
 import DoomDownload from '@/components/doom-download.astro'
 import DoomProTip from '@/components/doom-pro-tip.astro'
 import DoomLegal from '@/components/doom-legal.astro'
+import DoomShare from '@/components/doom-share.astro'
+import DoomSourceArt from '@/components/doom-source-art.astro'
 import { CircleCheck } from 'lucide-react'
 ---
 
+<DoomSourceArt />
 <Layout title="D00M3D" description="Doom 1 v1.9 shareware running on the Badger display." robots="noindex,nofollow"
   socialImage={{ src: '/images/d00m3d-og.png', alt: 'GitHub Badger badge running the Doom shareware demo', width: 1200, height: 630 }}>
   <section class="doom-layout px-4 py-10 sm:px-8 sm:py-14">
@@ -21,6 +24,7 @@ import { CircleCheck } from 'lucide-react'
     <DoomSimulator />
     <div class="doom-notes space-y-8">
       <DoomProTip />
+      <DoomShare />
       <DoomLegal />
     </div>
   </section>

@@ -3,7 +3,9 @@ import { badgeDoomKey, DoomInput, initDoomKeyboard, type DoomKey } from './doom-
 import { doomBadgeActions, type DoomBadgeAction } from './doom-badge-actions'
 import { doomRotation } from './doom-orientation'
 import { loadDoomRuntime, type DoomRuntime } from './doom-runtime'
-import { createPartyMarty } from './doom-party-marty'
+import { createDoomPowerMode, createPartyMarty } from './doom-party-marty'
+import { createDoomAvatar } from './doom-avatar'
+import { withUniverseUsername } from './doom-share'
 
 function paintMessage(canvas: HTMLCanvasElement, title: string, lines: string[]) {
   const context = canvas.getContext('2d', { willReadFrequently: true })
@@ -19,6 +21,7 @@ function paintMessage(canvas: HTMLCanvasElement, title: string, lines: string[])
 }
 
 export function initDoomPage(root: HTMLElement) {
+  console.info('%cNot-so-secret cheat code:%c Type @[YOUR-GITHUB-USERNAME] and then ENTER for a surprise.', 'font-weight: bold', 'font-weight: normal')
   const pageTitle = document.title
   const canvas = root.querySelector<HTMLCanvasElement>('[data-doom-screen]')!
   const runtimeCanvas = root.querySelector<HTMLCanvasElement>('[data-doom-runtime-screen]')!
@@ -76,16 +79,22 @@ export function initDoomPage(root: HTMLElement) {
     status.hidden = state === 'Running'
     loadState.textContent = state
   }
+  const powerMode = createDoomPowerMode()
   const partyMarty = createPartyMarty(root, root.querySelector<HTMLVideoElement>('[data-party-marty-video]')!, signal, message => {
     setRuntimeStatus(message, 'Video unavailable')
-  })
+  }, powerMode, () => avatar.clear())
+  const avatar = createDoomAvatar(root, signal, powerMode, clearBadgeInput, () => partyMarty.setFaceEnabled(false))
+  const pauseOverlays = (paused: boolean) => {
+    partyMarty.setPaused(paused)
+    avatar.setPaused(paused)
+  }
   function openVideo() {
     if (videoOpen) return
     videoOpen = true
     clearBadgeInput()
     removeKeyboard()
     runtime?.pause()
-    partyMarty.setPaused(true)
+    pauseOverlays(true)
     video.hidden = false
     videoToolbar.hidden = false
     for (const key of keys) key.disabled = true
@@ -108,19 +117,20 @@ export function initDoomPage(root: HTMLElement) {
     loadState.textContent = runtimeStatus.state
     removeKeyboard = initDoomKeyboard(root, input)
     if (!document.hidden && !documentOpen) runtime?.resume()
-    partyMarty.setPaused(document.hidden || documentOpen)
+    pauseOverlays(document.hidden || documentOpen)
     if (fallbackMode) canvas.focus({ preventScroll: true })
     else modelHost.querySelector<HTMLElement>('canvas[role="img"]')?.focus({ preventScroll: true })
   }
   function activateBadgeAction(action: DoomBadgeAction) {
     if (action.kind === 'video') openVideo()
-    else window.open(action.href, '_blank', 'noopener,noreferrer')
+    else window.open(withUniverseUsername(action.href, new URLSearchParams(globalThis.location?.search).get('u') ?? ''), '_blank', 'noopener,noreferrer')
   }
   const updateFrame = () => {
     const context = canvas.getContext('2d')
     if (context && runtimeCanvas.width && runtimeCanvas.height) {
       context.drawImage(runtimeCanvas, 0, 0, runtimeCanvas.width, runtimeCanvas.height, 0, 0, canvas.width, canvas.height)
       partyMarty.render(context)
+      avatar.render(context)
     }
     model.updateFrame()
   }
@@ -252,23 +262,24 @@ export function initDoomPage(root: HTMLElement) {
   window.addEventListener('blur', clearBadgeInput, { signal })
   document.addEventListener('document-viewer:open', () => {
     documentOpen = true
-    partyMarty.setPaused(true)
+    pauseOverlays(true)
     clearBadgeInput()
     runtime?.pause()
   }, { signal })
   document.addEventListener('document-viewer:close', () => {
     documentOpen = false
-    partyMarty.setPaused(document.hidden || videoOpen)
+    pauseOverlays(document.hidden || videoOpen)
     if (!document.hidden && !videoOpen) runtime?.resume()
   }, { signal })
   document.addEventListener('visibilitychange', () => {
     clearBadgeInput()
-    partyMarty.setPaused(document.hidden || documentOpen || videoOpen)
+    pauseOverlays(document.hidden || documentOpen || videoOpen)
     if (document.hidden || documentOpen || videoOpen) runtime?.pause()
     else runtime?.resume()
   }, { signal })
   window.addEventListener('pagehide', () => {
     partyMarty.dispose()
+    avatar.dispose()
     videoFrame.removeAttribute('src')
     clearBadgeInput()
     void runtime?.syncSaves().catch(() => {})
@@ -286,6 +297,7 @@ export function initDoomPage(root: HTMLElement) {
     key(key: DoomKey, pressed: boolean) { if (!videoOpen) input.set(`api:${key}`, key, pressed) },
     dispose() {
       partyMarty.dispose()
+      avatar.dispose()
       videoFrame.removeAttribute('src')
       clearBadgeInput()
       void runtime?.syncSaves().catch(() => {})

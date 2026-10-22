@@ -97,7 +97,7 @@ async function startSite(timeout) {
     child.kill('SIGTERM')
     await exited
   }
-  const url = `http://127.0.0.1:${port}/d00m3d/`
+  const url = `http://127.0.0.1:${port}/virtual/`
   try {
     const deadline = Date.now() + timeout
     while (Date.now() < deadline) {

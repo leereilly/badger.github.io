@@ -1,6 +1,6 @@
 # Doom browser assets
 
-The secret `/d00m3d` route ships the original, unmodified **Doom 1 v1.9
+The secret `/virtual` route ships the original, unmodified **Doom 1 v1.9
 shareware** episode and a pinned GPL-licensed WebAssembly engine. The WAD is
 shareware, not freeware, public domain, or GPL content.
 

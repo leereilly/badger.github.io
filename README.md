@@ -61,9 +61,32 @@ npm run preview      # Preview the production build
 npm run astro        # Run Astro CLI commands
 ```
 
+## Doom avatars and sharing
+
+While playing `/virtual/`, type `@USERNAME` and press Enter to replace Doomguy's
+HUD face with that GitHub avatar, downsampled to 35x31 pixels and mapped to the
+bundled Doom palette. The cheat has no on-page form or status text.
+This enables the same god mode, weapons, and five-second
+ammo refill as `PARTYMARTY`; changing faces does not toggle god mode off.
+
+Links with `?u=USERNAME` restore the avatar; personalized URLs use
+`/virtual?u=USERNAME` without a slash before the query. **Copy link** copies a clean,
+personalized URL; social links add platform-specific `utm_source` parameters.
+The Universe link also adds `utm_content=USERNAME`. Mobile browsers supporting
+Web Share provide native sharing. Open Graph and X previews use the committed
+Doom image, not a dynamically generated avatar image.
+
+Without a username, the pro tip switches to the avatar cheat after ten seconds
+with a one-time highlight (disabled for reduced motion). With a username, it
+explains how to change the avatar during gameplay.
+
+`/doom`, `/doom3d`, and `/d00m3d` redirect to `/virtual/`, preserving query parameters and
+fragments. The custom GitHub Pages 404 page handles case variants of those
+aliases and `/virtual`; it leaves missing asset paths and unrelated URLs alone.
+
 ## Doom media capture
 
-Generate media from the local `/d00m3d/` page (the same renderer and verified
+Generate media from the local `/virtual/` page (the same renderer and verified
 shareware assets as the deployed page):
 
 ```bash
@@ -97,7 +120,7 @@ npm run capture:doom-video -- --seconds 20 --fps 60 --output artifacts/doom-4k.m
 npm run capture:doom-og -- --output artifacts/doom-og.png
 npm run capture:doom-webp -- --output artifacts/doom-transparent.webp
 # Capture a deployment after deploying these capture hooks:
-npm run capture:doom-video -- --url https://leereilly.net/badger.github.io/d00m3d/
+npm run capture:doom-video -- --url https://badger.github.io/virtual/
 ```
 
 `--timeout 120000` sets the startup/demo timeout in milliseconds. The video
@@ -194,6 +217,24 @@ github: "https://github.com/your-repo/hack-code"
 
 ### GitHub Pages
 
+The production Doom page is `https://badger.github.io/virtual/`. Use HTTPS:
+Doom's asset integrity checks require Web Crypto in a secure context (localhost
+also works). Enable **Enforce HTTPS** in the repository's Pages settings so
+`http://badger.github.io/virtual` redirects to HTTPS.
+
+The deployment workflow reads `SITE_URL` and `BASE_PATH` from GitHub Pages;
+no fork owner or custom domain belongs in the source. Local builds default to
+`https://badger.github.io` with base `/`. To check a fork's project-site build:
+
+```bash
+SITE_URL=https://example.github.io BASE_PATH=/badger.github.io/ npm run build
+node scripts/verify-site-paths.mjs /badger.github.io/ https://example.github.io
+```
+
+CI checks both the production root and a fork subpath, including the absolute
+sharing image URL. Badge model source credits are external provenance links,
+not deployment URLs.
+
 1. Configure Astro:
    ```js
    export default defineConfig({
@@ -221,7 +262,28 @@ github: "https://github.com/your-repo/hack-code"
 
 ## 📄 License
 
-MIT License. See [LICENSE](LICENSE).
+Website code is MIT licensed; see [LICENSE](LICENSE). Bundled third-party
+software and assets retain their own licenses.
+
+### Doom licensing
+
+The `/virtual/` page includes two separately licensed components:
+
+- **Engine:** WebSockets Doom / Chocolate Doom and its browser adapter are
+  GPLv2 software, not MIT. See the bundled [GPLv2 text](public/doom/runtime/COPYING.txt)
+  and [corresponding source, local patch, and rebuild instructions](public/doom/runtime/SOURCE.md).
+- **Game data:** `DOOM1.WAD` is the original, unmodified Doom 1 v1.9 shareware
+  episode, copyright id Software. It is **not GPL, freeware, or public domain**.
+  Redistribution is governed by the [original limited-use shareware license](public/doom/licenses/DOOM1-SHAREWARE.txt),
+  which permits free copies but prohibits charging for receipt or use without
+  id Software's prior written consent. Commercial `DOOM.WAD` and `DOOM2.WAD`
+  data are not included.
+
+See [Doom asset documentation](public/doom/README.md) and
+[third-party notices](public/doom/THIRD_PARTY.md) for provenance and verification
+details. DOOM and associated trademarks belong to their respective owners.
+This unofficial integration is not affiliated with or endorsed by id Software,
+Bethesda Softworks, or Microsoft.
 
 ## 🙏 Acknowledgements
 

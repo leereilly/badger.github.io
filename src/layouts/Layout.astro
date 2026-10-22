@@ -13,6 +13,7 @@ export interface Props {
 
 const { title, description = 'Badger 2350 hack index: code, hardware notes, examples.', robots, socialImage } = Astro.props
 const socialImageURL = socialImage && new URL(sitePath(socialImage.src), Astro.site ?? Astro.url).href
+const socialPageURL = new URL(Astro.url.pathname, Astro.site ?? Astro.url).href
 ---
 
 <!doctype html>
@@ -24,11 +25,16 @@ const socialImageURL = socialImage && new URL(sitePath(socialImage.src), Astro.s
       <meta property="og:type" content="website" />
       <meta property="og:title" content={title} />
       <meta property="og:description" content={description} />
+      <meta property="og:url" content={socialPageURL} />
       <meta property="og:image" content={socialImageURL} />
       <meta property="og:image:alt" content={socialImage.alt} />
       <meta property="og:image:width" content={String(socialImage.width)} />
       <meta property="og:image:height" content={String(socialImage.height)} />
       <meta name="twitter:card" content="summary_large_image" />
+      <meta name="twitter:title" content={title} />
+      <meta name="twitter:description" content={description} />
+      <meta name="twitter:image" content={socialImageURL} />
+      <meta name="twitter:image:alt" content={socialImage.alt} />
     </>}
     {robots && <meta name="robots" content={robots} />}
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />

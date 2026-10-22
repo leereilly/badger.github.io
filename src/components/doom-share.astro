@@ -1,0 +1,52 @@
+---
+import { Copy, Share2 } from 'lucide-react'
+import { socialURL, type SocialPlatform } from '@/lib/doom-share'
+const platforms: { id: SocialPlatform; label: string }[] = [
+  { id: 'x', label: 'X' },
+  { id: 'linkedin', label: 'LinkedIn' },
+  { id: 'threads', label: 'Threads' },
+  { id: 'facebook', label: 'Facebook' },
+  { id: 'bluesky', label: 'Bluesky' },
+]
+---
+
+<div data-doom-share class="doom-share mt-3 font-mono">
+  <div class="flex flex-wrap items-center gap-x-4 gap-y-1">
+    <span class="inline-flex min-h-11 items-center gap-2.5 text-muted-foreground"><Share2 aria-hidden="true" />Share</span>
+    <button type="button" data-share-native hidden><Share2 aria-hidden="true" />Share via device</button>
+    <button type="button" data-share-copy><Copy aria-hidden="true" />Copy link</button>
+  </div>
+  <nav aria-label="Share Doom" class="flex flex-wrap gap-x-4">
+    {platforms.map(platform => (
+      <a data-share-platform={platform.id} href={socialURL(platform.id, Astro.url.href)}
+        target="_blank" rel="noopener noreferrer" aria-label={`Share on ${platform.label} (opens a new tab)`}>{platform.label}</a>
+    ))}
+    <button type="button" data-share-mastodon>Mastodon</button>
+  </nav>
+  <form data-share-mastodon-form hidden class="mt-2">
+    <label for="doom-mastodon-server" class="block text-muted-foreground">Your Mastodon server</label>
+    <div class="mt-1 flex flex-wrap gap-2">
+      <input id="doom-mastodon-server" name="server" placeholder="mastodon.social" required maxlength="253"
+        autocomplete="url" inputmode="url" autocapitalize="none" spellcheck="false" />
+      <button type="submit">Open composer</button>
+    </div>
+  </form>
+  <p data-share-status role="status" class="text-xs text-muted-foreground"></p>
+  <input data-share-fallback hidden readonly aria-label="Share link" class="mt-1 w-full" />
+</div>
+
+<style>
+  .doom-share { font-size: 0.75rem; }
+  button, a { display: inline-flex; align-items: center; gap: 0.625rem; min-height: 2.75rem; color: hsl(var(--foreground)); cursor: pointer; }
+  button:hover, a:hover { color: hsl(var(--primary)); }
+  button:focus-visible, a:focus-visible, input:focus-visible { outline: 2px solid hsl(var(--ring)); outline-offset: 3px; }
+  :global(.doom-share svg) { width: 1rem; height: 1rem; }
+  [hidden] { display: none !important; }
+  input { min-width: 0; max-width: 100%; padding: 0.5rem; background: hsl(var(--background)); color: hsl(var(--foreground)); border: 1px solid hsl(var(--border)); border-radius: 0.25rem; }
+  input::placeholder { color: hsl(var(--muted-foreground)); }
+</style>
+
+<script>
+  import { initDoomShare } from '@/lib/doom-share'
+  for (const root of document.querySelectorAll<HTMLElement>('[data-doom-share]')) initDoomShare(root)
+</script>
