@@ -83,16 +83,15 @@ test('secret Doom route is noindex and absent from navigation and footer', () =>
   assert.doesNotMatch(footer, /\/d00m3d/)
 })
 
-test('Doom intro keeps the punchline and links to Universe on demand', async () => {
+test('Doom intro keeps the punchline and links to Universe virtual registration and on demand', async () => {
   const callout = await readFile(new URL('../src/components/universe-callout.astro', import.meta.url), 'utf8')
   assert.match(page, /But does it run DOOM\?<\/h1>/)
   assert.match(page, /On a GitHub badge\? Seriously\?<\/p>/)
   assert.match(page, /Of course it does\.<\/p>\s*<UniverseCallout \/>\s*<DoomDownload \/>\s*<\/header>\s*<DoomSimulator \/>/)
   assert.doesNotMatch(page, /Secret editor route/)
   assert.ok(callout.includes('href="https://githubuniverse.com/?utm_source=GitHub&utm_medium=Site&utm_campaign=virtual_badge_uni_26"'))
-  assert.match(callout, /Missed the action\? Catch it on demand\./)
-  assert.doesNotMatch(callout, /Register virtually/)
-  assert.match(callout, /Watch GitHub Universe/)
+  assert.match(callout, /Register virtually \/ watch on demand/)
+  assert.doesNotMatch(callout, /Missed the action|Watch GitHub Universe/)
 })
 
 test('badge firmware download follows Universe with accessible installation help', async () => {
@@ -124,16 +123,18 @@ test('bottom link list is removed while video return controls remain available',
   assert.match(links, /data-doom-video-close/)
 })
 
-test('Doom tips rotate on page load with a short noclip instruction and separate source link', async () => {
+test('Doom keeps only the noclip protip with Monamoji and a separate source link', async () => {
   const tips = await readFile(new URL('../src/components/doom-pro-tip.astro', import.meta.url), 'utf8')
   assert.match(page, /<DoomProTip \/>/)
   assert.match(tips, /Once the game has started, click the badge screen and type/)
-  assert.match(tips, /code: 'IDSPISPOPD'/)
+  assert.match(tips, /<code[^>]*>IDSPISPOPD<\/code>/)
   assert.match(tips, /to walk through walls\./)
   assert.ok(tips.includes('https://github.com/id-Software/DOOM/blob/a77dfb96cb91780ca334d0d4cfd86957558007e0/linuxdoom-1.10/st_stuff.c#L426-L431'))
-  assert.match(tips, /sessionStorage\.getItem\('doom-tip'\)/)
-  assert.match(tips, /sessionStorage\.setItem\('doom-tip'/)
-  assert.doesNotMatch(tips, /setInterval|mona-mindblown/)
+  assert.match(tips, /prefers-reduced-motion: reduce/)
+  assert.match(tips, /sitePath\('\/images\/mona-mindblown\.webp'\)/)
+  assert.match(tips, /sitePath\('\/images\/mona-mindblown\.gif'\)/)
+  assert.match(tips, /alt="Mindblown Mona" width="32" height="32"/)
+  assert.doesNotMatch(tips, /<script>|sessionStorage|\shidden(?:=|\s|>)|Use the arrow keys|Knee-Deep in the Dead|lower right physical button/)
 })
 
 test('legal notices and keyboard controls use collapsed native disclosures', async () => {
