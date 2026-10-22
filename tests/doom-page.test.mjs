@@ -141,6 +141,7 @@ test('Doom starts with the noclip protip and includes contextual avatar hints', 
   assert.match(tips, /Explore this and other cheat codes in the original source code/)
   assert.match(tips, /data-doom-tip-default/)
   assert.match(tips, /data-doom-tip-discover hidden/)
+  assert.match(tips, /Once the game has started, click the badge screen, type <code[^>]*>@YOUR-GITHUB-USERNAME<\/code>, then press Enter/)
   assert.match(tips, /data-doom-tip-change hidden/)
   assert.doesNotMatch(tips, /sessionStorage|Use the arrow keys|Knee-Deep in the Dead|lower right physical button/)
 })
