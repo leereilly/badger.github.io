@@ -17,6 +17,9 @@
     "prepare:doom-runtime": "node scripts/prepare-doom-runtime.mjs",
     "provision:doom-assets": "node scripts/provision-doom-assets.mjs",
     "verify:doom-assets": "node scripts/verify-doom-assets.mjs",
+    "capture:doom-video": "node scripts/capture-doom-video.mjs",
+    "capture:doom-webp": "node scripts/capture-doom-webp.mjs",
+    "capture:doom-og": "node scripts/capture-doom-og.mjs",
     "test:editor": "node --test tests/*.test.mjs"
   },
   "dependencies": {
@@ -56,6 +59,7 @@
     "@gltf-transform/core": "^4.5.1",
     "@gltf-transform/functions": "^4.5.1",
     "@types/three": "^0.186.0",
-    "occt-import-js": "^0.0.23"
+    "occt-import-js": "^0.0.23",
+    "playwright": "^1.64.1"
   }
 }

@@ -16,6 +16,7 @@ export interface BadgeModelControls {
   zoomOut?: HTMLButtonElement
   displayFit?: 'contain' | 'stretch'
   idleRotation?: boolean
+  capture?: boolean
   displayOverlay?: HTMLElement
   canvasLabel?: string
 }
@@ -164,8 +165,7 @@ export function initBadgeModel(host: HTMLElement, screen: HTMLCanvasElement, but
   function setButtons(value: number) {
     mask = value
     for (const [bit, cap] of caps) {
-      const gamepad = ({ 16: 256, 8: 512, 4: 1024, 2: 2048, 1: 4096 } as Record<number, number>)[bit]
-      const pressed = Boolean(value & (bit | gamepad))
+      const pressed = Boolean(value & bit)
       cap.mesh.position.z = cap.z - (pressed ? 0.0012 : 0)
       cap.material.emissive.setHex(pressed ? 0x5fed83 : 0)
       cap.material.emissiveIntensity = pressed ? 0.6 : 0
@@ -388,7 +388,23 @@ export function initBadgeModel(host: HTMLElement, screen: HTMLCanvasElement, but
     if (fullButton) fullButton.disabled = false
     if (elements?.zoomIn) elements.zoomIn.disabled = false
     if (elements?.zoomOut) elements.zoomOut.disabled = false
-    if (elements?.idleRotation) {
+    if (elements?.capture) {
+      const target = controls.target.clone()
+      const offset = camera.position.clone().sub(target)
+      const capture = (event: Event) => {
+        const { angle } = (event as CustomEvent<{ angle: number }>).detail
+        if (!Number.isFinite(angle)) throw new Error('Capture angle must be finite.')
+        controls.target.copy(target)
+        camera.position.copy(offset).applyAxisAngle(camera.up, angle).add(target)
+        controls.update()
+        updateFrame()
+        cancelAnimationFrame(frame)
+        frame = 0
+        renderer.render(scene, camera)
+      }
+      host.addEventListener('badge:capture', capture, { signal })
+      host.dataset.captureReady = 'true'
+    } else if (elements?.idleRotation) {
       idleRotation = initBadgeIdleRotation(host, seconds => {
         camera.position.sub(controls.target).applyAxisAngle(camera.up, seconds * 0.06).add(controls.target)
         controls.update()

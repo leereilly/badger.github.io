@@ -8,9 +8,11 @@ export interface Props {
   title: string
   description?: string
   robots?: string
+  socialImage?: { src: string; alt: string; width: number; height: number }
 }
 
-const { title, description = 'Badger 2350 hack index: code, hardware notes, examples.', robots } = Astro.props
+const { title, description = 'Badger 2350 hack index: code, hardware notes, examples.', robots, socialImage } = Astro.props
+const socialImageURL = socialImage && new URL(sitePath(socialImage.src), Astro.site ?? Astro.url).href
 ---
 
 <!doctype html>
@@ -18,6 +20,16 @@ const { title, description = 'Badger 2350 hack index: code, hardware notes, exam
   <head>
     <meta charset="UTF-8" />
     <meta name="description" content={description} />
+    {socialImage && <>
+      <meta property="og:type" content="website" />
+      <meta property="og:title" content={title} />
+      <meta property="og:description" content={description} />
+      <meta property="og:image" content={socialImageURL} />
+      <meta property="og:image:alt" content={socialImage.alt} />
+      <meta property="og:image:width" content={String(socialImage.width)} />
+      <meta property="og:image:height" content={String(socialImage.height)} />
+      <meta name="twitter:card" content="summary_large_image" />
+    </>}
     {robots && <meta name="robots" content={robots} />}
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="icon" type="image/svg+xml" href={sitePath('/favicon.svg')} />

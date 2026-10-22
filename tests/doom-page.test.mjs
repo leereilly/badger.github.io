@@ -91,7 +91,8 @@ test('Doom intro keeps the punchline and links to Universe virtual registration 
   assert.doesNotMatch(page, /Secret editor route/)
   assert.ok(callout.includes('href="https://githubuniverse.com/?utm_source=GitHub&utm_medium=Site&utm_campaign=virtual_badge_uni_26"'))
   assert.match(callout, /Register virtually \/ watch on demand/)
-  assert.doesNotMatch(callout, /Missed the action|Watch GitHub Universe/)
+  assert.match(callout, /Hear more about the badge in the keynotes\./)
+  assert.doesNotMatch(callout, /Missed the action|Catch it on demand/)
 })
 
 test('badge firmware download follows Universe with accessible installation help', async () => {

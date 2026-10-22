@@ -6,6 +6,56 @@ import { build } from 'esbuild'
 const compiled = await build({ entryPoints: [fileURLToPath(new URL('../src/lib/doom-input.ts', import.meta.url))], bundle: true, format: 'esm', platform: 'node', write: false })
 const { badgeDoomKey, doomKey, DoomInput, DoomUseDoubleTap, initDoomKeyboard } = await import(`data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`)
 
+test('cheat letters reach SDL once with canonical codes even when native legacy codes are missing', t => {
+  class Element extends EventTarget {
+    closest() { return this.editing ? this : null }
+  }
+  class KeyboardEvent extends Event {
+    constructor(type, options) {
+      super(type, options)
+      for (const [key, value] of Object.entries(options)) Object.defineProperty(this, key, { value })
+    }
+  }
+  const previous = new Map()
+  const document = new EventTarget()
+  for (const [name, value] of Object.entries({ Element, KeyboardEvent, document, window: new EventTarget() })) {
+    previous.set(name, Object.getOwnPropertyDescriptor(globalThis, name))
+    Object.defineProperty(globalThis, name, { configurable: true, writable: true, value })
+  }
+  t.after(() => {
+    dispose()
+    for (const [name, descriptor] of previous) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor)
+      else delete globalThis[name]
+    }
+  })
+  const scope = new Element()
+  const actions = []
+  const dispose = initDoomKeyboard(scope, new DoomInput((...args) => actions.push(args)))
+  const characters = []
+  const keys = []
+  document.addEventListener('keypress', event => characters.push(String.fromCharCode(event.charCode)))
+  document.addEventListener('keydown', event => keys.push(event.keyCode))
+  for (const text of ['IDSPISPOPD', 'idspispopd']) {
+    for (const letter of text) {
+      for (const type of ['keydown', 'keypress', 'keyup']) {
+        const event = new KeyboardEvent(type, { key: letter, code: `Key${letter.toUpperCase()}`, keyCode: 0, charCode: 0, bubbles: true })
+        scope.dispatchEvent(event)
+        if (!event.cancelBubble) document.dispatchEvent(event)
+      }
+    }
+  }
+  assert.equal(characters.join(''), 'idspispopdidspispopd')
+  assert.deepEqual(keys, [...'IDSPISPOPDIDSPISPOPD'].map(letter => letter.charCodeAt(0)))
+  assert.deepEqual(actions, [])
+  for (const options of [{ metaKey: true }, { ctrlKey: true }, { altKey: true }, { isComposing: true }]) {
+    scope.dispatchEvent(new KeyboardEvent('keypress', { key: 'I', code: 'KeyI', ...options }))
+  }
+  scope.editing = true
+  scope.dispatchEvent(new KeyboardEvent('keypress', { key: 'I', code: 'KeyI' }))
+  assert.equal(characters.length, 20)
+})
+
 test('each arrow press reaches the engine once rather than skipping a menu option', t => {
   const previous = new Map()
   class Element extends EventTarget {

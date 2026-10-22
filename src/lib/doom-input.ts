@@ -50,6 +50,20 @@ export function doomKey(event: Pick<KeyboardEvent, 'code'>) {
   return keyMap[event.code]
 }
 
+export function dispatchDoomCharacter(letter: string, type: 'keydown' | 'keypress' | 'keyup') {
+  const key = letter.toLowerCase()
+  const code = type === 'keypress' ? key.charCodeAt(0) : key.toUpperCase().charCodeAt(0)
+  document.dispatchEvent(new KeyboardEvent(type, {
+    key,
+    code: `Key${key.toUpperCase()}`,
+    keyCode: code,
+    charCode: type === 'keypress' ? code : 0,
+    which: code,
+    bubbles: true,
+    cancelable: true,
+  }))
+}
+
 export class DoomUseDoubleTap {
   private pressedAt: number | undefined
   private releasedAt: number | undefined
@@ -122,8 +136,15 @@ export function initDoomKeyboard(scope: HTMLElement, input: DoomInput) {
       event.stopPropagation()
       return
     }
-    if (event.type !== 'keydown' || event.metaKey || event.isComposing || target?.closest('input, textarea, select, [contenteditable="true"], [role="textbox"]')) return
+    if (event.metaKey || event.isComposing || target?.closest('input, textarea, select, [contenteditable="true"], [role="textbox"]')) return
     const key = doomKey(event)
+    // SDL needs legacy character codes, which native browser events do not always supply.
+    if (!key && !event.ctrlKey && !event.altKey && /^[a-z]$/i.test(event.key)) {
+      dispatchDoomCharacter(event.key, event.type as 'keydown' | 'keypress' | 'keyup')
+      event.stopPropagation()
+      return
+    }
+    if (event.type !== 'keydown') return
     if (!key) return
     held.set(source, key)
     input.set(`key:${source}`, key, true)

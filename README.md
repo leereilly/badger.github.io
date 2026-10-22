@@ -61,6 +61,50 @@ npm run preview      # Preview the production build
 npm run astro        # Run Astro CLI commands
 ```
 
+## Doom media capture
+
+Generate media from the local `/d00m3d/` page (the same renderer and verified
+shareware assets as the deployed page):
+
+```bash
+npx playwright install chromium
+# Install system FFmpeg for video, e.g. brew install ffmpeg on macOS.
+npm run capture:doom-video
+# Install WebP tools for transparent animation, e.g. brew install webp.
+npm run capture:doom-webp
+npm run capture:doom-og
+```
+
+Each command starts its own local Astro server and closes the server and browser
+when finished. All wait for the 3D model, verified runtime, and moving gameplay
+with Doom's actual status-bar artwork; the title screen is not captured.
+
+- Video: `artifacts/d00m3d-loop.mp4`, 3840x2160, 30 fps, 12 seconds, H.264, no audio.
+  One full turn joins at the back of the badge, hiding the discontinuity in the
+  demo. Play with looping enabled. Browser time advances by one fixed frame at a
+  time; slow capture does not cause dropped frames or a faster demo.
+- Open Graph: `public/images/d00m3d-og.png`, 1200x630, front view with live Doom.
+  The page's sharing metadata references this image. Regenerate and commit it
+  when the badge renderer changes.
+- WebP: `artifacts/d00m3d-loop.webp`, 960x540, 20 fps, 12 seconds, transparent
+  background and infinite looping. Uses the same full turn and fixed-time gameplay
+  as the video, joining behind the badge. Automatically lowers encoding quality
+  to stay strictly below 10 MB (10,000,000 bytes). If it cannot fit, it fails
+  without replacing an existing output; reduce `--fps` or `--seconds` and retry.
+
+```bash
+npm run capture:doom-video -- --seconds 20 --fps 60 --output artifacts/doom-4k.mp4
+npm run capture:doom-og -- --output artifacts/doom-og.png
+npm run capture:doom-webp -- --output artifacts/doom-transparent.webp
+# Capture a deployment after deploying these capture hooks:
+npm run capture:doom-video -- --url https://leereilly.net/badger.github.io/d00m3d/
+```
+
+`--timeout 120000` sets the startup/demo timeout in milliseconds. The video
+requires a positive whole frame count (`seconds * fps`). Outputs are generated
+without page navigation, toolbars, or controls. Normal page behavior is unchanged;
+the recorder's explicit-angle rendering is enabled only by `?capture=1`.
+
 ## App store descriptions
 
 The `/apps/` app store uses descriptions generated from the first sentence of
@@ -187,4 +231,3 @@ MIT License. See [LICENSE](LICENSE).
 ---
 
 **Keep shipping badge hacks.**
-

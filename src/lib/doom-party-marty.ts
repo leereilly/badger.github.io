@@ -1,4 +1,5 @@
 import { sitePath } from './site-path'
+import { dispatchDoomCharacter } from './doom-input'
 
 // STBAR border samples from the bundled Doom 1 shareware WAD, outside changing HUD fields.
 const hudSamples = [
@@ -17,20 +18,6 @@ export function hasDoomHud(context: CanvasRenderingContext2D) {
   if (range < 20) return false
   // Normalize palette flashes and gamma without treating the title screen as a HUD.
   return levels.filter((level, index) => Math.abs((level - low) / range - (hudSamples[index][2] - 27) / 124) < 0.12).length >= 14
-}
-
-function cheatKey(letter: string, type: 'keydown' | 'keypress' | 'keyup') {
-  const code = type === 'keypress' ? letter.charCodeAt(0) : letter.toUpperCase().charCodeAt(0)
-  const event = new KeyboardEvent(type, {
-    key: letter,
-    code: `Key${letter.toUpperCase()}`,
-    keyCode: code,
-    charCode: type === 'keypress' ? code : 0,
-    which: code,
-    bubbles: true,
-    cancelable: true,
-  })
-  document.dispatchEvent(event)
 }
 
 export function createPartyMarty(
@@ -89,9 +76,9 @@ export function createPartyMarty(
       if (pending && now >= nextKey) {
         const letter = pending[0]
         pending = pending.slice(1)
-        cheatKey(letter, 'keydown')
-        cheatKey(letter, 'keypress')
-        cheatKey(letter, 'keyup')
+        dispatchDoomCharacter(letter, 'keydown')
+        dispatchDoomCharacter(letter, 'keypress')
+        dispatchDoomCharacter(letter, 'keyup')
         nextKey = now + 50
       }
       if (!hud || failed || video.readyState < 2) return

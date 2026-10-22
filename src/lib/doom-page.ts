@@ -40,6 +40,7 @@ export function initDoomPage(root: HTMLElement) {
     zoomOut: root.querySelector<HTMLButtonElement>('[data-model-zoom-out]')!,
     displayFit: 'stretch' as const,
     idleRotation: true,
+    capture: new URLSearchParams(globalThis.location?.search).has('capture'),
     displayOverlay: video,
     canvasLabel: 'Interactive 3D badge. Drag to rotate, scroll to zoom. Touch pads and keyboard control Doom. Lower physical buttons: left opens r/itrunsdoom, middle opens Can it run Doom, right opens Doom source, up plays a video in the badge, down opens GitHub Universe.',
   }
