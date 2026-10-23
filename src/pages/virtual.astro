@@ -1,57 +1,30 @@
 ---
 import Layout from '@/layouts/Layout.astro'
 import DoomSimulator from '@/components/doom-simulator.astro'
-import UniverseCallout from '@/components/universe-callout.astro'
-import DoomDownload from '@/components/doom-download.astro'
-import DoomProTip from '@/components/doom-pro-tip.astro'
-import DoomLegal from '@/components/doom-legal.astro'
-import DoomShare from '@/components/doom-share.astro'
+import DoomExperiencePanel from '@/components/doom-experience-panel.astro'
 import DoomSourceArt from '@/components/doom-source-art.astro'
-import { CircleCheck } from 'lucide-react'
 ---
 
 <DoomSourceArt />
 <Layout title="But does it run DOOM? | GitHub Badger" description="Play Doom 1 v1.9 shareware on a virtual GitHub Badger badge in your browser. Play with your GitHub avatar." robots="noindex,nofollow" viewportFit="cover"
   socialImage={{ src: '/images/d00m3d-og.gif', alt: 'GitHub Badger badge running the Doom shareware demo', width: 800, height: 420 }}>
-  <section class="doom-layout px-4 py-10 sm:px-8 sm:py-14">
-    <header class="doom-intro">
-      <h1 class="text-4xl text-primary sm:text-5xl">But does it run DOOM?</h1>
-      <p class="mt-4 leading-relaxed text-muted-foreground">On a GitHub badge? Seriously?</p>
-      <p class="mt-4 flex items-center gap-2.5 text-2xl font-semibold text-primary"><CircleCheck size={24} className="shrink-0" aria-hidden="true" />Of course it does.</p>
-    </header>
+  <section class="doom-layout">
     <DoomSimulator />
-    <div class="doom-extras">
-      <UniverseCallout />
-      <DoomDownload />
-    </div>
-    <div class="doom-notes space-y-8">
-      <DoomProTip />
-      <DoomShare />
-      <DoomLegal />
-    </div>
+    <DoomExperiencePanel />
   </section>
 </Layout>
 
 <style>
   .doom-layout {
     display: grid;
-    grid-template-areas: 'intro' 'game' 'extras' 'notes';
+    grid-template-areas: 'game' 'panel';
     grid-template-columns: minmax(0, 1fr);
-    gap: 2rem;
+    gap: 1.25rem;
+    padding: 1.25rem 1rem;
     align-items: start;
   }
-  .doom-intro { grid-area: intro; min-width: 0; }
-  .doom-extras { grid-area: extras; min-width: 0; }
-  .doom-notes { grid-area: notes; min-width: 0; }
+  .doom-layout :global(.doom-experience-panel) { grid-area: panel; }
   .doom-layout :global(#doom-simulator) { grid-area: game; min-width: 0; }
-
-  @media (max-width: 1023px) {
-    .doom-layout { padding-top: 1.25rem; gap: 1.25rem; }
-    .doom-intro h1 { font-size: clamp(1.65rem, 6vw, 2.25rem); }
-    .doom-intro p { display: inline-flex; margin-top: 0.5rem; font-size: 0.875rem; }
-    .doom-intro p + p { margin-left: 0.5rem; }
-    .doom-intro :global(svg) { width: 1rem; height: 1rem; }
-  }
 
   @media (min-width: 1024px) {
     :global(body:has(.doom-layout)) {
@@ -64,23 +37,19 @@ import { CircleCheck } from 'lucide-react'
     :global(body:has(.doom-layout) > main) { flex: 1; min-height: 0; }
     :global(body:has(.doom-layout) > footer) { display: none; }
     .doom-layout {
-      grid-template-areas: 'intro game' 'extras game' 'notes game';
-      grid-template-columns: clamp(22rem, 28vw, 24rem) minmax(0, 1fr);
-      grid-template-rows: auto auto minmax(0, 1fr);
+      grid-template-areas: 'panel game';
+      grid-template-columns: clamp(22rem, 32vw, 32rem) minmax(0, 1fr);
+      grid-template-rows: minmax(0, 1fr);
       height: 100%;
-      padding: 0 0 0 2rem;
-      column-gap: 2.5rem;
-      row-gap: 0;
+      padding: 1.5rem;
+      gap: 1.5rem;
+      align-items: stretch;
     }
-    .doom-intro { padding-top: 2rem; }
-    .doom-notes {
-      margin-top: 1.5rem;
-      max-height: 100%;
+    .doom-layout :global(.doom-experience-panel) {
+      min-height: 0;
       overflow-y: auto;
-      padding-bottom: 1.5rem;
-      scrollbar-width: none;
+      scrollbar-width: thin;
     }
-    .doom-notes::-webkit-scrollbar { display: none; }
     .doom-layout :global(#doom-simulator) { height: 100%; }
   }
 </style>

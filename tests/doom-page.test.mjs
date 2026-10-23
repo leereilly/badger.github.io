@@ -36,7 +36,8 @@ async function compileDoomPage() {
       }
     `,
     './doom-runtime': `
-      export async function loadDoomRuntime() {
+      export async function loadDoomRuntime(_canvas, _signal, _base, _audio, onFrame) {
+        globalThis.__doomFrame = onFrame
         document.title = 'Engine window title'
         return globalThis.__doomRuntime
       }
@@ -70,15 +71,27 @@ const [{ doomRotation }, { badgeDoomKey, doomKey }] = await Promise.all([
 ])
 
 const page = await readFile(new URL('../src/pages/virtual.astro', import.meta.url), 'utf8')
+const panel = await readFile(new URL('../src/components/doom-experience-panel.astro', import.meta.url), 'utf8')
+const controlHelp = await readFile(new URL('../src/components/doom-controls.astro', import.meta.url), 'utf8')
 test('sharing follows the pro tip rather than appearing above the game', () => {
-  assert.match(page, /<DoomProTip\s*\/>\s*<DoomShare\s*\/>/)
+  assert.match(panel, /<DoomProTip\s*\/>\s*<DoomShare\s*\/>/)
 })
 const component = await readFile(new URL('../src/components/doom-simulator.astro', import.meta.url), 'utf8')
+const sharing = await readFile(new URL('../src/components/doom-share.astro', import.meta.url), 'utf8')
 const navigation = await readFile(new URL('../src/components/app-navigation.tsx', import.meta.url), 'utf8')
 const footer = await readFile(new URL('../src/components/Footer.astro', import.meta.url), 'utf8')
 const doomPage = await readFile(new URL('../src/lib/doom-page.ts', import.meta.url), 'utf8')
 const badgeModel = await readFile(new URL('../src/lib/badge-editor-model.ts', import.meta.url), 'utf8')
 const readme = await readFile(new URL('../public/doom/README.md', import.meta.url), 'utf8')
+
+test('capture, Share and Copy link are compact controls with platforms inside a popover', async () => {
+  const selfie = await readFile(new URL('../src/components/doom-selfie.astro', import.meta.url), 'utf8')
+  assert.match(sharing, /data-doom-selfie-save hidden disabled aria-label="Capture my DOOM badge"/)
+  assert.match(sharing, /data-share-open aria-expanded="false" aria-controls="doom-share-options"/)
+  assert.match(sharing, /data-share-menu popover="auto"/)
+  assert.doesNotMatch(selfie, /Drag the badge|1200 × 630|<details/)
+  assert.doesNotMatch(component, /DoomSelfie/)
+})
 
 test('secret Doom route is noindex and absent from navigation and footer', () => {
   assert.match(page, /robots="noindex,nofollow"/)
@@ -86,32 +99,32 @@ test('secret Doom route is noindex and absent from navigation and footer', () =>
   assert.doesNotMatch(footer, /\/virtual/)
 })
 
-test('Doom intro keeps the punchline and links to Universe virtual registration and on demand', async () => {
+test('compact hero merges the punchline, leads with firmware and keeps Universe secondary', async () => {
   const callout = await readFile(new URL('../src/components/universe-callout.astro', import.meta.url), 'utf8')
-  assert.match(page, /But does it run DOOM\?<\/h1>/)
-  assert.match(page, /On a GitHub badge\? Seriously\?<\/p>/)
-  assert.match(page, /Of course it does\.<\/p>\s*<\/header>\s*<DoomSimulator \/>\s*<div class="doom-extras">\s*<UniverseCallout \/>\s*<DoomDownload \/>/)
+  assert.match(panel, /But does it run DOOM\?<\/h1>/)
+  assert.match(panel, /On a GitHub badge\? Of course it does\.<\/p>/)
+  assert.match(panel, /<DoomDownload \/>\s*<UniverseCallout \/>/)
   assert.doesNotMatch(page, /Secret editor route/)
   assert.ok(callout.includes('href="https://githubuniverse.com/?utm_source=GitHub&utm_medium=Site&utm_campaign=virtual_badge_uni_26"'))
-  assert.match(callout, /Register virtually \/ watch on demand/)
-  assert.match(callout, /Hear more about the badge in the keynotes\./)
+  assert.match(callout, /Explore GitHub Universe/)
+  assert.doesNotMatch(callout, /<p|Hear more about the badge/)
   assert.doesNotMatch(callout, /Missed the action|Catch it on demand/)
 })
 
-test('badge firmware download follows Universe with accessible installation help', async () => {
+test('badge firmware download retains safe flashing instructions in collapsed installation help', async () => {
   const download = await readFile(new URL('../src/components/doom-download.astro', import.meta.url), 'utf8')
+  const installation = await readFile(new URL('../src/components/doom-installation-help.astro', import.meta.url), 'utf8')
   const viewer = await readFile(new URL('../src/components/document-viewer.astro', import.meta.url), 'utf8')
   assert.match(download, /href=\{sitePath\('\/doom\/downloads\/doom\.uf2'\)\}/)
   assert.match(download, /download="doom\.uf2"/)
   assert.match(download, /Get DOOM for your badge/)
-  assert.match(download, /<DocumentViewer id="doom-install"/)
-  assert.match(download, /title: 'Install Doom on your badge',\s*label: 'Installation help'/)
-  assert.doesNotMatch(download, /label: '\?'/)
-  assert.match(download, /Hold HOME, tap RESET once/)
-  assert.match(download, /RP2350 drive, not the BADGER drive/)
-  assert.match(download, /Flashing replaces the firmware/)
-  assert.match(download, /Back up your badge files/)
-  assert.match(download, /To return to MonaOS/)
+  assert.match(installation, /<details name="doom-help" data-doom-installation>/)
+  assert.match(installation, /<summary>Installation help<\/summary>/)
+  assert.match(installation, /Hold HOME, tap RESET once/)
+  assert.match(installation, /RP2350 drive, not the BADGER drive/)
+  assert.match(installation, /Flashing replaces the firmware/)
+  assert.match(installation, /Back up your badge files/)
+  assert.match(installation, /To return to MonaOS/)
   assert.match(viewer, /aria-label=\{label \? title : undefined\}/)
   assert.match(viewer, /title\.textContent = link\.getAttribute\('aria-label'\) \|\| link\.textContent/)
   const firmware = await readFile(new URL('../public/doom/downloads/doom.uf2', import.meta.url))
@@ -127,20 +140,17 @@ test('bottom link list is removed while video return controls remain available',
   assert.match(links, /data-doom-video-close/)
 })
 
-test('Doom starts with the noclip protip and includes contextual avatar hints', async () => {
+test('Doom leads with the avatar pro tip and keeps advanced cheats in the controls disclosure', async () => {
   const tips = await readFile(new URL('../src/components/doom-pro-tip.astro', import.meta.url), 'utf8')
-  assert.match(page, /<DoomProTip \/>/)
-  assert.match(tips, /Once the game has started, click the badge screen and type/)
-  assert.match(tips, /<code[^>]*>IDSPISPOPD<\/code>/)
-  assert.match(tips, /to walk through walls\./)
-  assert.ok(tips.includes('https://github.com/id-Software/DOOM/blob/a77dfb96cb91780ca334d0d4cfd86957558007e0/linuxdoom-1.10/st_stuff.c#L426-L431'))
+  assert.match(panel, /<DoomProTip \/>/)
+  assert.match(controlHelp, /<code[^>]*>IDSPISPOPD<\/code>/)
+  assert.match(controlHelp, /to walk through walls\./)
+  assert.ok(controlHelp.includes('https://github.com/id-Software/DOOM/blob/a77dfb96cb91780ca334d0d4cfd86957558007e0/linuxdoom-1.10/st_stuff.c#L426-L431'))
   assert.match(tips, /prefers-reduced-motion: reduce/)
   assert.match(tips, /sitePath\('\/images\/mona-mindblown\.webp'\)/)
   assert.match(tips, /sitePath\('\/images\/mona-mindblown\.gif'\)/)
   assert.match(tips, /alt="Mindblown Mona" width="32" height="32"/)
-  assert.match(tips, /Explore this and other cheat codes in the original source code/)
   assert.match(tips, /data-doom-tip-default/)
-  assert.match(tips, /data-doom-tip-discover hidden/)
   assert.match(tips, /Once the game has started, click the badge screen, type <code[^>]*>@YOUR-GITHUB-USERNAME<\/code>, then press Enter/)
   assert.match(tips, /data-doom-tip-change hidden/)
   assert.doesNotMatch(tips, /sessionStorage|Use the arrow keys|Knee-Deep in the Dead|lower right physical button/)
@@ -148,24 +158,25 @@ test('Doom starts with the noclip protip and includes contextual avatar hints', 
 
 test('legal notices and keyboard controls use collapsed native disclosures', async () => {
   const legal = await readFile(new URL('../src/components/doom-legal.astro', import.meta.url), 'utf8')
-  assert.match(page, /<DoomLegal \/>/)
-  assert.match(legal, /<details>/)
-  assert.match(legal, /The boring legal stuff/)
+  assert.match(panel, /<DoomLegal \/>/)
+  assert.match(legal, /<details name="doom-help" data-doom-legal>/)
+  assert.match(legal, /<summary>Legal<\/summary>/)
   assert.match(legal, /© id Software/)
   assert.match(legal, /Not affiliated with id Software, Bethesda Softworks, or Microsoft/)
   assert.match(legal, /Shareware license/)
   assert.match(legal, /Engine GPLv2/)
   assert.match(legal, /Corresponding source/)
-  assert.match(component, /<details class="doom-controls[^"]*">/)
-  assert.match(component, /<summary[^>]*>Controls<\/summary>/)
-  assert.doesNotMatch(`${legal}\n${component}`, /<details[^>]*\bopen\b/)
+  assert.match(controlHelp, /<details name="doom-help" data-doom-control-help>/)
+  assert.match(controlHelp, /<summary>Controls<\/summary>/)
+  assert.doesNotMatch(`${legal}\n${controlHelp}`, /<details[^>]*\bopen\b/)
 })
 
-test('Doom keeps the desktop full-badge default and initializes Screen view for mobile', () => {
+test('Doom starts with the full 3D badge on both desktop and mobile, with the badge first on phones', () => {
   assert.match(component, /data-model-full[^>]*aria-pressed="true"/)
   assert.match(component, /data-model-screen[^>]*aria-pressed="false"/)
   assert.match(doomPage, /matchMedia\?\.\('\(max-width: 1023px\)'\)/)
-  assert.match(doomPage, /'\[data-model-screen\]'\)\?\.setAttribute\('aria-pressed', String\(mobileView\)\)/)
+  assert.match(doomPage, /'\[data-model-screen\]'\)\?\.setAttribute\('aria-pressed', 'false'\)/)
+  assert.match(page, /grid-template-areas: 'game' 'panel'/)
 })
 
 test('Doom omits the bottom control buttons and asset checksum details', () => {
@@ -179,7 +190,7 @@ test('page accurately names shareware and exposes the complete control set', () 
   assert.match(page, /Doom 1 v1\.9 shareware/)
   assert.doesNotMatch(`${page}\n${component}`, /freeware/i)
   for (const control of ['Ctrl/J fire', 'Space/K use', 'Shift/Alt strafe', 'Escape menu', 'Enter confirm']) {
-    assert.match(component, new RegExp(control.replace('/', '\\/')))
+    assert.match(controlHelp, new RegExp(control.replace('/', '\\/')))
   }
   assert.doesNotMatch(component, /data-doom-start/)
   assert.match(component, /data-doom-load-state/)
@@ -245,6 +256,8 @@ test('rotation remaps model-relative inputs without changing fixed controls', as
   const videoToolbar = new Element()
   const partyVideo = Object.assign(new Element(), { pause() {}, load() {} })
   const modelHost = new Element()
+  const selfieSave = Object.assign(new Element(), { disabled: true })
+  const selfiePanel = new Element()
   modelHost.querySelector = () => canvas
   const elements = new Map([
     ['[data-doom-screen]', canvas],
@@ -265,6 +278,13 @@ test('rotation remaps model-relative inputs without changing fixed controls', as
     ['[data-doom-video-toolbar]', videoToolbar],
     ['[data-party-marty-video]', partyVideo],
   ])
+  const shareElements = new Map([
+    ['[data-doom-selfie-save]', selfieSave],
+    ['[data-doom-selfie-status]', new Element()],
+    ['[data-doom-selfie]', selfiePanel],
+  ])
+  const shareRoot = new Element()
+  shareRoot.querySelector = selector => shareElements.get(selector)
   const root = new Element()
   root.querySelector = selector => elements.get(selector)
   root.querySelectorAll = selector => {
@@ -275,6 +295,7 @@ test('rotation remaps model-relative inputs without changing fixed controls', as
 
   const document = Object.assign(new EventTarget(), {
     hidden: false, title: 'D00M3D', body: { classList: { remove() {} } },
+    querySelector: selector => selector === '[data-doom-share]' ? shareRoot : null,
   })
   const opened = []
   const window = Object.assign(new EventTarget(), {
@@ -284,7 +305,8 @@ test('rotation remaps model-relative inputs without changing fixed controls', as
     open: (...args) => opened.push(args),
   })
   const previous = new Map()
-  for (const [name, value] of Object.entries({ Element, HTMLElement: Element, document, window })) {
+  const location = new URL('https://badger.example/virtual/')
+  for (const [name, value] of Object.entries({ Element, HTMLElement: Element, document, window, location })) {
     previous.set(name, Object.getOwnPropertyDescriptor(globalThis, name))
     Object.defineProperty(globalThis, name, { configurable: true, writable: true, value })
   }
@@ -295,6 +317,7 @@ test('rotation remaps model-relative inputs without changing fixed controls', as
     }
     delete globalThis.__doomModelInput
     delete globalThis.__doomRuntime
+    delete globalThis.__doomFrame
   })
 
   const changes = []
@@ -313,8 +336,19 @@ test('rotation remaps model-relative inputs without changing fixed controls', as
   t.after(() => { console.info = originalInfo })
   const page = initDoomPage(root)
   await page.start()
-  assert.equal(elements.get('[data-model-screen]')['aria-pressed'], 'true')
-  assert.equal(elements.get('[data-model-full]')['aria-pressed'], 'false')
+  await Promise.resolve()
+  await t.test('Save image is enabled with a username and ready 3D view outside gameplay', () => {
+    assert.equal(modelHost.dataset.state, 'ready')
+    location.search = '?u=octocat'
+    document.dispatchEvent(new Event('doom:avatar-change'))
+    globalThis.__doomFrame()
+    assert.equal(selfiePanel.hidden, false)
+    assert.equal(selfieSave.disabled, false)
+  })
+  location.search = ''
+  document.dispatchEvent(new Event('doom:avatar-change'))
+  assert.equal(elements.get('[data-model-screen]')['aria-pressed'], 'false')
+  assert.equal(elements.get('[data-model-full]')['aria-pressed'], 'true')
   await assert.doesNotReject(runtimeCanvas.requestPointerLock())
   assert.deepEqual(messages, [[
     '%cNot-so-secret cheat code:%c Type @[YOUR-GITHUB-USERNAME] and then ENTER for a surprise.',

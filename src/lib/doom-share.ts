@@ -64,6 +64,41 @@ export function initDoomShare(root: HTMLElement) {
   const links = [...root.querySelectorAll<HTMLAnchorElement>('[data-share-platform]')]
   const abort = new AbortController()
   const { signal } = abort
+  const trigger = root.querySelector<HTMLButtonElement>('[data-share-open]')!
+  const menu = root.querySelector<HTMLElement>('[data-share-menu]')!
+  const nativePopover = typeof menu.showPopover === 'function'
+  if (!nativePopover) menu.hidden = true
+  const isMenuOpen = () => nativePopover ? menu.matches(':popover-open') : !menu.hidden
+  const positionMenu = () => {
+    if (!isMenuOpen()) return
+    const bounds = trigger.getBoundingClientRect()
+    menu.style.left = `${Math.max(8, Math.min(window.innerWidth - menu.offsetWidth - 8, bounds.left + bounds.width / 2 - menu.offsetWidth / 2))}px`
+    menu.style.top = `${Math.max(8, bounds.bottom + menu.offsetHeight + 8 <= window.innerHeight ? bounds.bottom + 8 : bounds.top - menu.offsetHeight - 8)}px`
+  }
+  const syncMenu = () => {
+    trigger.setAttribute('aria-expanded', String(isMenuOpen()))
+    positionMenu()
+  }
+  const closeMenu = (restoreFocus = false) => {
+    if (!isMenuOpen()) return
+    if (nativePopover) menu.hidePopover()
+    else menu.hidden = true
+    mastodon.hidden = true
+    syncMenu()
+    if (restoreFocus) trigger.focus()
+  }
+  trigger.addEventListener('click', () => {
+    if (nativePopover) menu.togglePopover()
+    else menu.hidden = !menu.hidden
+    syncMenu()
+    if (isMenuOpen()) menu.querySelector<HTMLElement>('a, button:not([hidden])')?.focus()
+  }, { signal })
+  menu.addEventListener('toggle', syncMenu, { signal })
+  window.addEventListener('resize', positionMenu, { signal })
+  document.addEventListener('scroll', positionMenu, { signal, capture: true, passive: true })
+  document.addEventListener('pointerdown', event => {
+    if (event.target instanceof Node && !menu.contains(event.target) && !trigger.contains(event.target)) closeMenu()
+  }, { signal })
   const refresh = () => {
     for (const link of links) link.href = socialURL(link.dataset.sharePlatform as SocialPlatform, location.href)
     const username = new URLSearchParams(location.search).get('u') ?? ''
@@ -116,6 +151,7 @@ export function initDoomShare(root: HTMLElement) {
   root.querySelector('[data-share-mastodon]')!.addEventListener('click', () => {
     mastodon.hidden = !mastodon.hidden
     if (!mastodon.hidden) server.focus()
+    positionMenu()
   }, { signal })
   server.addEventListener('input', () => server.setCustomValidity(''), { signal })
   mastodon.addEventListener('submit', event => {
@@ -130,9 +166,9 @@ export function initDoomShare(root: HTMLElement) {
     }
   }, { signal })
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && !mastodon.hidden && mastodon.contains(document.activeElement)) {
-      mastodon.hidden = true
-      root.querySelector<HTMLButtonElement>('[data-share-mastodon]')?.focus()
+    if (event.key === 'Escape' && isMenuOpen()) {
+      closeMenu(true)
+      event.preventDefault()
     }
   }, { signal })
   window.addEventListener('pagehide', () => abort.abort(), { signal, once: true })

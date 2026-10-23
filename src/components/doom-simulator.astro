@@ -3,6 +3,7 @@ import { Expand, Maximize, Minus, Plus, RotateCw, ScanSearch, SlidersHorizontal 
 import DoomBadgeLinks from './doom-badge-links.astro'
 import DoomVideo from './doom-video.astro'
 import DoomMobileControls from './doom-mobile-controls.astro'
+import { sitePath } from '@/lib/site-path'
 ---
 
 <section id="doom-simulator" tabindex="-1" aria-label="Doom simulator">
@@ -27,6 +28,7 @@ import DoomMobileControls from './doom-mobile-controls.astro'
 
   <div class="doom-stage">
     <div data-doom-model data-state="idle" class="doom-model">
+      <img data-doom-preview src={sitePath('/images/doom-badge-preview.webp')} alt="GitHub badge with DOOM running on its screen" width="293" height="600" fetchpriority="high" class="doom-preview" />
       <canvas data-doom-runtime-screen width="320" height="200" aria-hidden="true"></canvas>
       <div data-doom-fallback class="doom-fallback">
         <canvas data-doom-screen width="320" height="200" tabindex="0" aria-label="Doom display. Use arrow keys, Ctrl or J to fire, Space or K to use, Shift or Alt to strafe, Escape for menu, and Enter to confirm."></canvas>
@@ -37,12 +39,6 @@ import DoomMobileControls from './doom-mobile-controls.astro'
 
     <div class="doom-inputs mt-4">
       <DoomMobileControls />
-      <details class="doom-controls mx-auto max-w-3xl font-mono text-xs text-muted-foreground">
-        <summary class="cursor-pointer py-2 text-center uppercase tracking-[0.12em] hover:text-foreground">Controls</summary>
-        <p class="mt-2 text-center text-[0.7rem] leading-relaxed">
-          Keyboard: arrows move · Ctrl/J fire · Space/K use · Shift/Alt strafe · Escape menu · Enter confirm. Drag outside controls to rotate the badge. Scroll to zoom.
-        </p>
-      </details>
       <DoomBadgeLinks />
     </div>
   </div>
@@ -50,6 +46,8 @@ import DoomMobileControls from './doom-mobile-controls.astro'
 
 <style>
   .doom-model { position: relative; height: clamp(360px, 68vh, 850px); overflow: hidden; background: hsl(var(--background)); }
+  .doom-preview { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; object-fit: contain; padding: 0.75rem; pointer-events: none; }
+  .doom-model[data-state="ready"] .doom-preview, .doom-model[data-state="fallback"] .doom-preview { display: none; }
   .doom-model :global(> canvas) { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
   .doom-model :global(> canvas:focus-visible) { outline: 2px solid hsl(var(--primary)); outline-offset: -2px; }
   .doom-model :global(> canvas[data-doom-runtime-screen]) { position: absolute; left: 0; top: 0; width: 320px; height: 200px; opacity: 0; pointer-events: none; }
@@ -78,9 +76,8 @@ import DoomMobileControls from './doom-mobile-controls.astro'
     .doom-mobile-tool { display: inline-flex; }
     .doom-secondary-tools { display: none; flex-basis: 100%; justify-content: flex-end; }
     #doom-simulator[data-view-options="true"] .doom-secondary-tools { display: flex; }
-    .doom-model { height: auto; min-height: 180px; aspect-ratio: 8 / 5; }
+    .doom-model { height: clamp(280px, 48svh, 480px); min-height: 180px; }
     .doom-fallback canvas { max-height: 100%; object-fit: contain; }
-    .doom-controls { display: none; }
     #doom-simulator[data-fullscreen="true"] { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; padding: max(0.5rem, env(safe-area-inset-top)) max(0.75rem, env(safe-area-inset-right)) max(0.5rem, env(safe-area-inset-bottom)) max(0.75rem, env(safe-area-inset-left)); overflow-y: auto; background: hsl(var(--background)); }
     #doom-simulator[data-fullscreen="true"] .doom-stage { flex: 1; min-height: 0; }
     :global(body.doom-fullscreen-open) { overflow: hidden; }

@@ -116,3 +116,18 @@ test('display orientation changes during loading reach the new model', async () 
   assert.deepEqual(states, [true])
   controller.dispose()
 })
+
+test('image capture forwards dimensions and remains unavailable before load or after disposal', async () => {
+  const image = {}
+  const calls = []
+  const controller = createBadgeModelController(async () => model({
+    capture(...dimensions) { calls.push(dimensions); return image },
+  }), () => assert.fail('Unexpected fallback'))
+  assert.throws(() => controller.capture(1200, 630), /unavailable/)
+  controller.start()
+  await tick()
+  assert.equal(controller.capture(1200, 630), image)
+  assert.deepEqual(calls, [[1200, 630]])
+  controller.dispose()
+  assert.throws(() => controller.capture(1200, 630), /unavailable/)
+})

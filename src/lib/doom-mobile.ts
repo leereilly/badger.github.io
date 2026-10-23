@@ -1,12 +1,10 @@
 import type { DoomKey } from './doom-input'
-import { githubUsername } from './doom-avatar'
 
 export function initDoomMobile(
   root: HTMLElement,
   handlers: {
     key: (source: string, key: DoomKey, pressed: boolean) => void
     release: () => void
-    selectAvatar: (username: string) => Promise<boolean>
   },
   signal: AbortSignal,
 ) {
@@ -90,36 +88,6 @@ export function initDoomMobile(
     event.stopImmediatePropagation()
   }, { signal, capture: true })
 
-  const form = root.querySelector<HTMLFormElement>('[data-doom-avatar-form]')
-  const username = form?.querySelector<HTMLInputElement>('input')
-  const status = root.querySelector<HTMLElement>('[data-doom-avatar-status]')
-  const submit = form?.querySelector<HTMLButtonElement>('button[type="submit"]')
-  form?.addEventListener('submit', async event => {
-    event.preventDefault()
-    if (!username || !status || !submit) return
-    handlers.release()
-    const value = username.value.trim().replace(/^@/, '')
-    if (!githubUsername(value)) {
-      status.textContent = 'Enter a valid GitHub username.'
-      username.setAttribute('aria-invalid', 'true')
-      return
-    }
-    username.removeAttribute('aria-invalid')
-    submit.disabled = true
-    status.textContent = 'Loading avatar...'
-    try {
-      const selected = await handlers.selectAvatar(value)
-      if (signal.aborted) return
-      status.textContent = selected
-        ? `Avatar applied: @${value.toLowerCase()}.`
-        : 'Avatar could not be loaded. Check the username and try again.'
-      if (selected) username.blur()
-    } catch {
-      if (!signal.aborted) status.textContent = 'Avatar could not be loaded. Check the username and try again.'
-    } finally {
-      submit.disabled = false
-    }
-  }, { signal })
   signal.addEventListener('abort', () => {
     clear()
     document.body.classList.remove('doom-fullscreen-open')

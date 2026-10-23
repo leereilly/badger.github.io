@@ -24,22 +24,15 @@ class Element extends EventTarget {
   blur() { this.blurred = true }
 }
 
-function setup(t, selectAvatar = async () => true) {
+function setup(t) {
   const forward = Object.assign(new Element(), { dataset: { doomKey: 'ArrowUp' } })
   const fire = Object.assign(new Element(), { dataset: { doomKey: 'ControlLeft' } })
   const fullscreen = new Element()
   const options = new Element()
-  const username = new Element()
-  const submit = new Element()
-  const status = new Element()
-  const form = new Element()
-  form.querySelector = selector => selector === 'input' ? username : submit
   const root = new Element()
   const elements = new Map([
     ['[data-doom-fullscreen]', fullscreen],
     ['[data-doom-view-options]', options],
-    ['[data-doom-avatar-form]', form],
-    ['[data-doom-avatar-status]', status],
   ])
   root.querySelector = selector => elements.get(selector) ?? null
   root.querySelectorAll = () => [forward, fire]
@@ -69,9 +62,8 @@ function setup(t, selectAvatar = async () => true) {
   const mobile = initDoomMobile(root, {
     key: (...args) => keys.push(args),
     release: () => { releases++ },
-    selectAvatar,
   }, abort.signal)
-  return { root, forward, fire, fullscreen, options, username, submit, status, form, document, window, classes, keys, mobile, abort, releases: () => releases }
+  return { root, forward, fire, fullscreen, options, document, window, classes, keys, mobile, abort, releases: () => releases }
 }
 
 function pointer(button, type, pointerId) {
@@ -169,33 +161,4 @@ test('simulator fullscreen events do not reach the engine canvas fullscreen hand
   document.fullscreenElement = null
   root.dispatchEvent(new Event('fullscreenchange', { bubbles: true }))
   assert.equal(root.dataset.fullscreen, 'false')
-})
-
-test('avatar form validates handles, reports loading and failure, and allows retry', async t => {
-  const requests = []
-  let finish
-  const { form, username, status, submit, releases } = setup(t, value => {
-    requests.push(value)
-    return new Promise(resolve => { finish = resolve })
-  })
-  username.value = '../bad'
-  form.dispatchEvent(new Event('submit', { cancelable: true }))
-  assert.match(status.textContent, /valid GitHub username/)
-  assert.equal(username.getAttribute('aria-invalid'), 'true')
-  assert.deepEqual(requests, [])
-  username.value = ' @Octocat '
-  form.dispatchEvent(new Event('submit', { cancelable: true }))
-  assert.equal(username.getAttribute('aria-invalid'), null)
-  assert.equal(submit.disabled, true)
-  assert.match(status.textContent, /Loading/)
-  finish(false)
-  await settle()
-  assert.equal(submit.disabled, false)
-  assert.match(status.textContent, /try again/)
-  form.dispatchEvent(new Event('submit', { cancelable: true }))
-  finish(true)
-  await settle()
-  assert.match(status.textContent, /Avatar applied: @octocat/)
-  assert.equal(username.blurred, true)
-  assert.equal(releases(), 3)
 })

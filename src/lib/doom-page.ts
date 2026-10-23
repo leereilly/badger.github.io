@@ -7,6 +7,7 @@ import { createDoomPowerMode, createPartyMarty } from './doom-party-marty'
 import { createDoomAvatar } from './doom-avatar'
 import { withUniverseUsername } from './doom-share'
 import { initDoomMobile } from './doom-mobile'
+import { initDoomSelfie } from './doom-selfie'
 
 function paintMessage(canvas: HTMLCanvasElement, title: string, lines: string[]) {
   const context = canvas.getContext('2d', { willReadFrequently: true })
@@ -32,8 +33,8 @@ export function initDoomPage(root: HTMLElement) {
   const status = root.querySelector<HTMLElement>('[data-doom-status]')!
   const loadState = root.querySelector<HTMLElement>('[data-doom-load-state]')!
   const mobileView = window.matchMedia?.('(max-width: 1023px)')?.matches ?? false
-  root.querySelector('[data-model-screen]')?.setAttribute('aria-pressed', String(mobileView))
-  root.querySelector('[data-model-full]')?.setAttribute('aria-pressed', String(!mobileView))
+  root.querySelector('[data-model-screen]')?.setAttribute('aria-pressed', 'false')
+  root.querySelector('[data-model-full]')?.setAttribute('aria-pressed', 'true')
   // Touch controls do not use the engine's relative mouse input.
   if (mobileView) runtimeCanvas.requestPointerLock = async () => {}
   const video = root.querySelector<HTMLElement>('[data-doom-video]')!
@@ -92,6 +93,13 @@ export function initDoomPage(root: HTMLElement) {
     setRuntimeStatus(message, 'Video unavailable')
   }, powerMode, () => avatar.clear())
   const avatar = createDoomAvatar(root, signal, powerMode, clearBadgeInput, () => partyMarty.setFaceEnabled(false))
+  const selfie = initDoomSelfie(document.querySelector<HTMLElement>('[data-doom-share]') ?? root, () => {
+    clearBadgeInput()
+    return model.capture(1200, 630)
+  }, signal)
+  const syncSelfie = () => {
+    selfie.setReady(!videoOpen && !documentOpen && !fallbackMode && modelHost.dataset.state === 'ready')
+  }
   const pauseOverlays = (paused: boolean) => {
     partyMarty.setPaused(paused)
     avatar.setPaused(paused)
@@ -99,6 +107,7 @@ export function initDoomPage(root: HTMLElement) {
   function openVideo() {
     if (videoOpen) return
     videoOpen = true
+    selfie.setReady(false)
     clearBadgeInput()
     removeKeyboard()
     runtime?.pause()
@@ -128,6 +137,7 @@ export function initDoomPage(root: HTMLElement) {
     removeKeyboard = initDoomKeyboard(root, input)
     if (!document.hidden && !documentOpen) runtime?.resume()
     pauseOverlays(document.hidden || documentOpen)
+    syncSelfie()
     if (fallbackMode) canvas.focus({ preventScroll: true })
     else modelHost.querySelector<HTMLElement>('canvas[role="img"]')?.focus({ preventScroll: true })
   }
@@ -143,6 +153,7 @@ export function initDoomPage(root: HTMLElement) {
       avatar.render(context)
     }
     model.updateFrame()
+    syncSelfie()
   }
   const setBadge = (source: BadgeSource, bit: number, pressed: boolean) => {
     if (pressed) badgeSources.set(source.id, { bit, modelRelative: source.modelRelative })
@@ -176,6 +187,7 @@ export function initDoomPage(root: HTMLElement) {
   const showFallback = (reason: unknown) => {
     console.warn('Doom 3D badge view unavailable; using the 2D display.', reason)
     fallbackMode = true
+    selfie.setReady(false)
     rotate.disabled = true
     applyOrientation(false)
     modelHost.dataset.state = 'fallback'
@@ -192,6 +204,7 @@ export function initDoomPage(root: HTMLElement) {
       rotate.disabled = false
       modelHost.dataset.state = 'ready'
       fallback.hidden = true
+      syncSelfie()
     }, () => {})
     return view
   }, showFallback)
@@ -253,7 +266,6 @@ export function initDoomPage(root: HTMLElement) {
       if (!videoOpen && !documentOpen) input.set(source, key, pressed)
     },
     release: clearBadgeInput,
-    selectAvatar: avatar.select,
   }, signal)
   for (const key of keys) {
     const bit = Number(key.dataset.badgeBit)
@@ -279,6 +291,7 @@ export function initDoomPage(root: HTMLElement) {
   window.addEventListener('blur', clearBadgeInput, { signal })
   document.addEventListener('document-viewer:open', () => {
     documentOpen = true
+    selfie.setReady(false)
     pauseOverlays(true)
     clearBadgeInput()
     runtime?.pause()
@@ -287,6 +300,7 @@ export function initDoomPage(root: HTMLElement) {
     documentOpen = false
     pauseOverlays(document.hidden || videoOpen)
     if (!document.hidden && !videoOpen) runtime?.resume()
+    syncSelfie()
   }, { signal })
   document.addEventListener('visibilitychange', () => {
     clearBadgeInput()

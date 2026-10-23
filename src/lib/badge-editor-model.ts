@@ -467,6 +467,21 @@ export function initBadgeModel(host: HTMLElement, screen: HTMLCanvasElement, but
     zoom,
     setRotated,
     setDisplayRotated,
+    capture(width: number, height: number) {
+      if (!model || disposed) throw new Error('The 3D badge is not ready.')
+      const image = document.createElement('canvas')
+      image.width = width
+      image.height = height
+      const paint = image.getContext('2d')
+      if (!paint) throw new Error('Image export is unavailable in this browser.')
+      updateFrame()
+      renderer.render(scene, camera)
+      const scale = Math.min(width / canvas.width, height / canvas.height)
+      const drawWidth = canvas.width * scale
+      const drawHeight = canvas.height * scale
+      paint.drawImage(canvas, (width - drawWidth) / 2, (height - drawHeight) / 2, drawWidth, drawHeight)
+      return image
+    },
     setBacklight(value: number) { displayMaterial.color.setScalar(Math.max(0, Math.min(1, value))); render() },
     dispose() {
       if (disposed) return

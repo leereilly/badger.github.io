@@ -5,6 +5,7 @@ export interface BadgeModelView {
   setBacklight(value: number): void
   setRotated?(value: boolean): void
   setDisplayRotated?(value: boolean): void
+  capture?(width: number, height: number): HTMLCanvasElement
   dispose(): void
 }
 
@@ -66,6 +67,10 @@ export function createBadgeModelController(load: (signal: AbortSignal, fail: (er
     setBacklight(value: number) { backlight = value; call(view => view.setBacklight(value)) },
     setRotated(value: boolean) { rotated = value; call(view => view.setRotated?.(value)) },
     setDisplayRotated(value: boolean) { displayRotated = value; call(view => view.setDisplayRotated?.(value)) },
+    capture(width: number, height: number) {
+      if (!view?.capture || stopped) throw new Error('The 3D badge is unavailable. Reload to try again.')
+      return view.capture(width, height)
+    },
     dispose() {
       stopped = true
       clearTimeout(timer)

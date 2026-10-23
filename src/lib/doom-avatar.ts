@@ -203,6 +203,7 @@ export function createDoomAvatar(
   return {
     clear,
     select,
+    visible() { return gameplay && !!face },
     render(context: CanvasRenderingContext2D) {
       gameplay = !paused && isDoomGameplay(context)
       if (!gameplay) {
