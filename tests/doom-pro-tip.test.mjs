@@ -23,14 +23,16 @@ function setup(t, search = '') {
     previous.set(key, Object.getOwnPropertyDescriptor(globalThis, key))
     Object.defineProperty(globalThis, key, { configurable: true, writable: true, value })
   }
-  const dispose = initDoomProTip({
+  const root = {
+    hidden: false,
     querySelector: selector => ({
       '[data-doom-tip-default]': original,
       '[data-doom-tip-avatar]': avatar,
       '[data-doom-tip-discovery]': discovery,
       '[data-doom-tip-change]': change,
     })[selector],
-  })
+  }
+  const dispose = initDoomProTip(root)
   t.after(() => {
     dispose()
     for (const [key, descriptor] of previous) {
@@ -38,7 +40,7 @@ function setup(t, search = '') {
       else delete globalThis[key]
     }
   })
-  return { original, avatar, discovery, change, location, document, window, dispose }
+  return { root, original, avatar, discovery, change, location, document, window, dispose }
 }
 
 test('original cheat tip is replaced by avatar discovery after ten seconds', t => {
@@ -87,4 +89,31 @@ test('leaving the page cancels the timer and removes avatar-change listeners', t
   assert.equal(original.hidden, false)
   assert.equal(avatar.hidden, true)
   assert.equal(discovery.hidden, false)
+})
+
+test('typing a username hides the entire tip before or after the delay', t => {
+  const { root, location, document, window, change } = setup(t)
+  location.search = '?u=octocat'
+  document.dispatchEvent(new CustomEvent('doom:avatar-change', { detail: { fromURL: false } }))
+  assert.equal(root.hidden, true)
+  t.mock.timers.tick(10_000)
+  assert.equal(root.hidden, true)
+  document.dispatchEvent(new CustomEvent('doom:avatar-change', { detail: { fromURL: false } }))
+  assert.equal(root.hidden, true)
+  window.dispatchEvent(new Event('popstate'))
+  assert.equal(root.hidden, false)
+  assert.equal(change.hidden, false)
+})
+
+test('loading a URL avatar keeps the tip until a username is entered in-game', t => {
+  const { root, change, location, document } = setup(t, '?u=octocat')
+  document.dispatchEvent(new CustomEvent('doom:avatar-change', { detail: { fromURL: true } }))
+  t.mock.timers.tick(10_000)
+  assert.equal(root.hidden, false)
+  assert.equal(change.hidden, false)
+  document.dispatchEvent(new CustomEvent('doom:avatar-change', { detail: { fromURL: false } }))
+  assert.equal(root.hidden, true)
+  location.search = ''
+  document.dispatchEvent(new CustomEvent('doom:avatar-change', { detail: { fromURL: false } }))
+  assert.equal(root.hidden, false)
 })

@@ -95,15 +95,15 @@ export function createDoomAvatar(
   let paused = false
   let gameplay = false
   let powered = false
-  const updateURL = (username: string | null) => {
+  const updateURL = (username: string | null, fromURL = false) => {
     const url = new URL(location.href)
     if (username) url.searchParams.set('u', username)
     else url.searchParams.delete('u')
     if (url.search) url.pathname = url.pathname.replace(/\/$/, '') || '/'
     history.replaceState(history.state, '', url)
-    document.dispatchEvent(new Event('doom:avatar-change'))
+    document.dispatchEvent(new CustomEvent('doom:avatar-change', { detail: { fromURL } }))
   }
-  async function select(value: string) {
+  async function select(value: string, fromURL = false) {
     const username = githubUsername(value)
     if (!username) return false
     powerMode.activate()
@@ -144,7 +144,7 @@ export function createDoomAvatar(
       context.putImageData(pixels, 0, 0)
       onActivate()
       face = next
-      updateURL(username)
+      updateURL(username, fromURL)
       modelUsername(username)
       return true
     } catch (error) {
@@ -199,7 +199,7 @@ export function createDoomAvatar(
     capturedKeys.clear()
   }, { signal })
   const initial = new URLSearchParams(globalThis.location?.search).get('u')
-  if (initial !== null) void select(initial)
+  if (initial !== null) void select(initial, true)
   return {
     clear,
     select,

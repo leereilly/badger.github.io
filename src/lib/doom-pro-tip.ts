@@ -15,8 +15,15 @@ export function initDoomProTip(root: HTMLElement) {
     original.hidden = true
     avatar.hidden = false
   }, 10_000)
-  document.addEventListener('doom:avatar-change', update, { signal })
-  window.addEventListener('popstate', update, { signal })
+  document.addEventListener('doom:avatar-change', event => {
+    root.hidden = Boolean(new URLSearchParams(location.search).get('u')) &&
+      (event as CustomEvent<{ fromURL?: boolean }>).detail?.fromURL !== true
+    update()
+  }, { signal })
+  window.addEventListener('popstate', () => {
+    root.hidden = false
+    update()
+  }, { signal })
   const dispose = () => {
     clearTimeout(timer)
     abort.abort()

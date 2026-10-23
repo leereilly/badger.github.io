@@ -173,7 +173,8 @@ test('avatar controller captures gameplay input, uses the CORS fallback, and ign
   heldEnter.repeat = true
   root.dispatchEvent(heldEnter)
   assert.equal(heldEnter.defaultPrevented, true)
-  await changed
+  const [changeEvent] = await changed
+  assert.equal(changeEvent.detail.fromURL, false)
   assert.equal(model.dataset.avatar, 'octocat')
   assert.equal(location.search, '?u=octocat')
   assert.equal(location.pathname, '/virtual')
