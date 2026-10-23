@@ -107,7 +107,7 @@ test('compact hero merges the punchline, leads with firmware and keeps Universe 
   assert.doesNotMatch(page, /Secret editor route/)
   assert.ok(callout.includes('href="https://githubuniverse.com/?utm_source=GitHub&utm_medium=Site&utm_campaign=virtual_badge_uni_26"'))
   assert.match(callout, /Explore GitHub Universe/)
-  assert.doesNotMatch(callout, /<p|Hear more about the badge/)
+  assert.match(callout, /<\/a>[\s\S]*<p[^>]*>Hear more about the badges in the keynote sessions\.<\/p>/)
   assert.doesNotMatch(callout, /Missed the action|Catch it on demand/)
 })
 

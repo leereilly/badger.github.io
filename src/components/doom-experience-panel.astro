@@ -32,13 +32,12 @@ import DoomLegal from './doom-legal.astro'
   .doom-subheading { margin-top: 1rem; color: hsl(var(--muted-foreground)); font-size: 1.125rem; line-height: 1.6; }
   .doom-calls-to-action { display: grid; gap: 0.75rem; margin-top: 1.75rem; }
   .doom-experience-panel :global([data-doom-pro-tip]), .doom-experience-panel :global([data-doom-share]) { margin-top: 1.75rem; padding-top: 1.5rem; border-top: 1px solid hsl(var(--border) / 0.6); }
-  .doom-panel-footer { display: grid; grid-template-columns: 1.3fr 1fr 0.7fr; column-gap: 0.75rem; margin-top: 1rem; }
-  .doom-panel-footer :global(> details) { display: contents; }
-  .doom-panel-footer :global(> details > summary) { grid-row: 1; display: flex; align-items: center; min-height: 44px; list-style: none; cursor: pointer; color: hsl(var(--muted-foreground)); font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.6875rem; }
+  .doom-panel-footer { display: grid; grid-template-columns: minmax(0, 1fr); margin-top: 1rem; }
+  .doom-panel-footer :global(> details > summary) { display: flex; align-items: center; min-height: 44px; list-style: none; cursor: pointer; color: hsl(var(--muted-foreground)); font-family: var(--font-mono, ui-monospace, monospace); font-size: 0.6875rem; }
   .doom-panel-footer :global(summary::-webkit-details-marker) { display: none; }
   .doom-panel-footer :global(summary:hover), .doom-panel-footer :global(details[open] > summary) { color: hsl(var(--foreground)); }
   .doom-panel-footer :global(summary:focus-visible) { outline: 2px solid hsl(var(--ring)); outline-offset: 2px; }
-  .doom-panel-footer :global(.doom-help-content) { grid-column: 1 / -1; grid-row: 2; padding: 0.75rem 0; color: hsl(var(--muted-foreground)); font-size: 0.75rem; line-height: 1.75; }
+  .doom-panel-footer :global(.doom-help-content) { padding: 0.75rem 0; color: hsl(var(--muted-foreground)); font-size: 0.75rem; line-height: 1.75; }
   .doom-panel-footer :global(details:not([open]) > .doom-help-content) { display: none; }
   @media (max-width: 639px) {
     .doom-experience-panel { padding: 1.25rem; }
