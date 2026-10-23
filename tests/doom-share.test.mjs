@@ -7,7 +7,7 @@ const compiled = await build({
   entryPoints: [fileURLToPath(new URL('../src/lib/doom-share.ts', import.meta.url))],
   bundle: true, format: 'esm', platform: 'node', write: false,
 })
-const { shareURL, socialURL, mastodonOrigin, withUniverseUsername } = await import(
+const { shareURL, socialURL, randomShareText, mastodonOrigin, withUniverseUsername } = await import(
   `data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`
 )
 
@@ -32,6 +32,28 @@ test('each social composer embeds a correctly attributed URL without double enco
     assert.ok(payload.includes('u=octocat'))
     assert.ok(payload.includes(`utm_source=${platform}`))
     assert.equal(composer.protocol, 'https:')
+  }
+})
+
+test('share text randomly selects each approved message and retains the attributed link', t => {
+  const messages = [
+    "That's me. On a #GitHubUniverse badge. Playing DOOM.",
+    'My face. My badge. DOOM. #GitHubUniverse',
+    "I've been immortalized on a badge that runs DOOM. #GitHubUniverse",
+    "Look, Mom! I'm on a badge that runs DOOM. #GitHubUniverse",
+    "That's my avatar. That's DOOM. That's #GitHubUniverse.",
+    'Finally, a conference badge with my face AND DOOM. #GitHubUniverse',
+  ]
+  const random = t.mock.method(Math, 'random')
+  for (const [index, message] of messages.entries()) {
+    random.mock.mockImplementation(() => (index + 0.5) / messages.length)
+    assert.equal(randomShareText(), message)
+    for (const platform of ['x', 'threads', 'bluesky', 'mastodon']) {
+      const href = 'https://badger.github.io/virtual/?u=octocat'
+      const composer = new URL(socialURL(platform, href))
+      assert.equal(composer.searchParams.get('text'), platform === 'x' ? message : `${message} ${shareURL(href, platform)}`)
+      if (platform === 'x') assert.equal(composer.searchParams.get('url'), shareURL(href, platform))
+    }
   }
 })
 

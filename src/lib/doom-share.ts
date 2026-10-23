@@ -1,7 +1,18 @@
 import { githubUsername } from './doom-avatar'
 
 export type SocialPlatform = 'x' | 'linkedin' | 'threads' | 'facebook' | 'bluesky' | 'mastodon'
-const text = 'But does it run DOOM? On a GitHub badge. Play with your GitHub avatar.'
+const shareMessages = [
+  "That's me. On a #GitHubUniverse badge. Playing DOOM.",
+  'My face. My badge. DOOM. #GitHubUniverse',
+  "I've been immortalized on a badge that runs DOOM. #GitHubUniverse",
+  "Look, Mom! I'm on a badge that runs DOOM. #GitHubUniverse",
+  "That's my avatar. That's DOOM. That's #GitHubUniverse.",
+  'Finally, a conference badge with my face AND DOOM. #GitHubUniverse',
+]
+
+export function randomShareText() {
+  return shareMessages[Math.floor(Math.random() * shareMessages.length)]
+}
 
 export function shareURL(href: string, source?: string) {
   const url = new URL(href)
@@ -40,7 +51,8 @@ export function mastodonOrigin(value: string) {
 
 export function socialURL(platform: SocialPlatform, href: string, server?: string) {
   const link = shareURL(href, platform)
-  const message = `${text}\n${link}`
+  const text = randomShareText()
+  const message = `${text} ${link}`
   const destinations: Record<SocialPlatform, [string, Record<string, string>]> = {
     x: ['https://twitter.com/intent/tweet', { text, url: link }],
     linkedin: ['https://www.linkedin.com/sharing/share-offsite/', { url: link }],
@@ -141,7 +153,7 @@ export function initDoomShare(root: HTMLElement) {
   mobile.addEventListener('change', showNative, { signal })
   native.addEventListener('click', async () => {
     try {
-      await navigator.share({ title: 'D00M3D', text, url: shareURL(location.href, 'native') })
+      await navigator.share({ title: 'D00M3D', text: randomShareText(), url: shareURL(location.href, 'native') })
       status.textContent = 'Shared'
     } catch (error) {
       if (error instanceof Error && error.name === 'AbortError') return
