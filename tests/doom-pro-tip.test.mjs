@@ -10,7 +10,10 @@ const compiled = await build({
 const { initDoomProTip } = await import(`data:text/javascript;base64,${Buffer.from(compiled.outputFiles[0].text).toString('base64')}`)
 
 function setup(t, search = '') {
+  t.mock.timers.enable({ apis: ['setTimeout'] })
   const original = { hidden: false }
+  const avatar = { hidden: true }
+  const discovery = { hidden: false }
   const change = { hidden: true }
   const location = { search }
   const document = new EventTarget()
@@ -23,6 +26,8 @@ function setup(t, search = '') {
   const dispose = initDoomProTip({
     querySelector: selector => ({
       '[data-doom-tip-default]': original,
+      '[data-doom-tip-avatar]': avatar,
+      '[data-doom-tip-discovery]': discovery,
       '[data-doom-tip-change]': change,
     })[selector],
   })
@@ -33,36 +38,53 @@ function setup(t, search = '') {
       else delete globalThis[key]
     }
   })
-  return { original, change, location, document, window, dispose }
+  return { original, avatar, discovery, change, location, document, window, dispose }
 }
 
-test('avatar discovery is shown immediately without a username', t => {
-  const { original, change } = setup(t)
+test('original cheat tip is replaced by avatar discovery after ten seconds', t => {
+  const { original, avatar, discovery, change } = setup(t)
   assert.equal(original.hidden, false)
+  assert.equal(avatar.hidden, true)
+  t.mock.timers.tick(9_999)
+  assert.equal(original.hidden, false)
+  assert.equal(avatar.hidden, true)
+  t.mock.timers.tick(1)
+  assert.equal(original.hidden, true)
+  assert.equal(avatar.hidden, false)
+  assert.equal(discovery.hidden, false)
   assert.equal(change.hidden, true)
 })
 
-test('existing usernames immediately get the change-avatar tip and URL changes keep it consistent', t => {
-  const { original, change, location, document, window } = setup(t, '?u=leereilly')
+test('existing usernames get the change-avatar tip after the delay and URL changes keep it consistent', t => {
+  const { original, avatar, discovery, change, location, document, window } = setup(t, '?u=leereilly')
+  assert.equal(original.hidden, false)
+  assert.equal(avatar.hidden, true)
+  t.mock.timers.tick(10_000)
   assert.equal(original.hidden, true)
+  assert.equal(avatar.hidden, false)
+  assert.equal(discovery.hidden, true)
   assert.equal(change.hidden, false)
   location.search = ''
   document.dispatchEvent(new Event('doom:avatar-change'))
-  assert.equal(original.hidden, false)
+  assert.equal(discovery.hidden, false)
   assert.equal(change.hidden, true)
   location.search = '?u=octocat'
   window.dispatchEvent(new Event('popstate'))
-  assert.equal(original.hidden, true)
+  assert.equal(discovery.hidden, true)
   assert.equal(change.hidden, false)
   location.search = ''
   document.dispatchEvent(new Event('doom:avatar-change'))
-  assert.equal(original.hidden, false)
+  assert.equal(discovery.hidden, false)
+  assert.equal(original.hidden, true)
 })
 
-test('leaving the page removes avatar-change listeners', t => {
-  const { original, location, document, dispose } = setup(t)
-  dispose()
+test('leaving the page cancels the timer and removes avatar-change listeners', t => {
+  const { original, avatar, discovery, location, document, window } = setup(t)
+  window.dispatchEvent(new Event('pagehide'))
+  t.mock.timers.tick(10_000)
   location.search = '?u=octocat'
   document.dispatchEvent(new Event('doom:avatar-change'))
   assert.equal(original.hidden, false)
+  assert.equal(avatar.hidden, true)
+  assert.equal(discovery.hidden, false)
 })
