@@ -90,7 +90,7 @@ test('Doom intro keeps the punchline and links to Universe virtual registration 
   const callout = await readFile(new URL('../src/components/universe-callout.astro', import.meta.url), 'utf8')
   assert.match(page, /But does it run DOOM\?<\/h1>/)
   assert.match(page, /On a GitHub badge\? Seriously\?<\/p>/)
-  assert.match(page, /Of course it does\.<\/p>\s*<UniverseCallout \/>\s*<DoomDownload \/>\s*<\/header>\s*<DoomSimulator \/>/)
+  assert.match(page, /Of course it does\.<\/p>\s*<\/header>\s*<DoomSimulator \/>\s*<div class="doom-extras">\s*<UniverseCallout \/>\s*<DoomDownload \/>/)
   assert.doesNotMatch(page, /Secret editor route/)
   assert.ok(callout.includes('href="https://githubuniverse.com/?utm_source=GitHub&utm_medium=Site&utm_campaign=virtual_badge_uni_26"'))
   assert.match(callout, /Register virtually \/ watch on demand/)
@@ -161,9 +161,11 @@ test('legal notices and keyboard controls use collapsed native disclosures', asy
   assert.doesNotMatch(`${legal}\n${component}`, /<details[^>]*\bopen\b/)
 })
 
-test('Doom starts with the complete badge visible rather than screen zoom', () => {
+test('Doom keeps the desktop full-badge default and initializes Screen view for mobile', () => {
   assert.match(component, /data-model-full[^>]*aria-pressed="true"/)
   assert.match(component, /data-model-screen[^>]*aria-pressed="false"/)
+  assert.match(doomPage, /matchMedia\?\.\('\(max-width: 1023px\)'\)/)
+  assert.match(doomPage, /'\[data-model-screen\]'\)\?\.setAttribute\('aria-pressed', String\(mobileView\)\)/)
 })
 
 test('Doom omits the bottom control buttons and asset checksum details', () => {
@@ -271,11 +273,14 @@ test('rotation remaps model-relative inputs without changing fixed controls', as
     return []
   }
 
-  const document = Object.assign(new EventTarget(), { hidden: false, title: 'D00M3D' })
+  const document = Object.assign(new EventTarget(), {
+    hidden: false, title: 'D00M3D', body: { classList: { remove() {} } },
+  })
   const opened = []
   const window = Object.assign(new EventTarget(), {
     setTimeout,
     AudioContext: undefined,
+    matchMedia: () => ({ matches: true }),
     open: (...args) => opened.push(args),
   })
   const previous = new Map()
@@ -308,6 +313,9 @@ test('rotation remaps model-relative inputs without changing fixed controls', as
   t.after(() => { console.info = originalInfo })
   const page = initDoomPage(root)
   await page.start()
+  assert.equal(elements.get('[data-model-screen]')['aria-pressed'], 'true')
+  assert.equal(elements.get('[data-model-full]')['aria-pressed'], 'false')
+  await assert.doesNotReject(runtimeCanvas.requestPointerLock())
   assert.deepEqual(messages, [[
     '%cNot-so-secret cheat code:%c Type @[YOUR-GITHUB-USERNAME] and then ENTER for a surprise.',
     'font-weight: bold',

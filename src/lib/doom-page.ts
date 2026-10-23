@@ -6,6 +6,7 @@ import { loadDoomRuntime, type DoomRuntime } from './doom-runtime'
 import { createDoomPowerMode, createPartyMarty } from './doom-party-marty'
 import { createDoomAvatar } from './doom-avatar'
 import { withUniverseUsername } from './doom-share'
+import { initDoomMobile } from './doom-mobile'
 
 function paintMessage(canvas: HTMLCanvasElement, title: string, lines: string[]) {
   const context = canvas.getContext('2d', { willReadFrequently: true })
@@ -30,6 +31,11 @@ export function initDoomPage(root: HTMLElement) {
   const rotate = root.querySelector<HTMLButtonElement>('[data-model-rotate]')!
   const status = root.querySelector<HTMLElement>('[data-doom-status]')!
   const loadState = root.querySelector<HTMLElement>('[data-doom-load-state]')!
+  const mobileView = window.matchMedia?.('(max-width: 1023px)')?.matches ?? false
+  root.querySelector('[data-model-screen]')?.setAttribute('aria-pressed', String(mobileView))
+  root.querySelector('[data-model-full]')?.setAttribute('aria-pressed', String(!mobileView))
+  // Touch controls do not use the engine's relative mouse input.
+  if (mobileView) runtimeCanvas.requestPointerLock = async () => {}
   const video = root.querySelector<HTMLElement>('[data-doom-video]')!
   const videoFrame = root.querySelector<HTMLIFrameElement>('[data-doom-video-frame]')!
   const videoToolbar = root.querySelector<HTMLElement>('[data-doom-video-toolbar]')!
@@ -42,7 +48,7 @@ export function initDoomPage(root: HTMLElement) {
     zoomIn: root.querySelector<HTMLButtonElement>('[data-model-zoom-in]')!,
     zoomOut: root.querySelector<HTMLButtonElement>('[data-model-zoom-out]')!,
     displayFit: 'stretch' as const,
-    idleRotation: true,
+    idleRotation: !mobileView,
     capture: new URLSearchParams(globalThis.location?.search).has('capture'),
     displayOverlay: video,
     canvasLabel: 'Interactive 3D badge. Drag to rotate, scroll to zoom. Touch pads and keyboard control Doom. Lower physical buttons: left opens r/itrunsdoom, middle opens Can it run Doom, right opens Doom source, up plays a video in the badge, down opens GitHub Universe.',
@@ -50,6 +56,7 @@ export function initDoomPage(root: HTMLElement) {
   const abort = new AbortController()
   const { signal } = abort
   let runtime: DoomRuntime | undefined
+  let mobile: ReturnType<typeof initDoomMobile> | undefined
   let audio: AudioContext | undefined
   let bootPromise: Promise<void> | undefined
   let badgeMask = 0
@@ -70,6 +77,7 @@ export function initDoomPage(root: HTMLElement) {
     model.setButtons(0)
     for (const key of keys) key.dataset.pressed = 'false'
     input.clear()
+    mobile?.clear()
   }
   let removeKeyboard = initDoomKeyboard(root, input)
   function setRuntimeStatus(message: string, state: string) {
@@ -98,6 +106,7 @@ export function initDoomPage(root: HTMLElement) {
     video.hidden = false
     videoToolbar.hidden = false
     for (const key of keys) key.disabled = true
+    for (const key of root.querySelectorAll<HTMLButtonElement>('[data-doom-key]')) key.disabled = true
     videoFrame.src = 'https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?autoplay=1&playsinline=1&rel=0'
     status.textContent = 'YouTube video · Return to Doom to resume the game'
     status.hidden = false
@@ -112,6 +121,7 @@ export function initDoomPage(root: HTMLElement) {
     video.hidden = true
     videoToolbar.hidden = true
     for (const key of keys) key.disabled = false
+    for (const key of root.querySelectorAll<HTMLButtonElement>('[data-doom-key]')) key.disabled = false
     status.textContent = runtimeStatus.message
     status.hidden = runtimeStatus.state === 'Running'
     loadState.textContent = runtimeStatus.state
@@ -215,7 +225,7 @@ export function initDoomPage(root: HTMLElement) {
         document.title = pageTitle
         setRuntimeStatus('Running approved Doom runtime with Doom 1 v1.9 shareware', 'Running')
         if (documentOpen || document.hidden || videoOpen) runtime.pause()
-        else canvas.focus()
+        else if (!mobileView) canvas.focus()
         updateFrame()
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error)
@@ -238,6 +248,13 @@ export function initDoomPage(root: HTMLElement) {
     button.addEventListener('click', openVideo, { signal })
   }
   videoClose.addEventListener('click', closeVideo, { signal })
+  mobile = initDoomMobile(root, {
+    key: (source, key, pressed) => {
+      if (!videoOpen && !documentOpen) input.set(source, key, pressed)
+    },
+    release: clearBadgeInput,
+    selectAvatar: avatar.select,
+  }, signal)
   for (const key of keys) {
     const bit = Number(key.dataset.badgeBit)
     const source = { id: `button:${bit}`, modelRelative: false }

@@ -105,7 +105,7 @@ export function createDoomAvatar(
   }
   async function select(value: string) {
     const username = githubUsername(value)
-    if (!username) return
+    if (!username) return false
     powerMode.activate()
     powered = true
     request?.abort()
@@ -146,9 +146,11 @@ export function createDoomAvatar(
       face = next
       updateURL(username)
       modelUsername(username)
+      return true
     } catch (error) {
-      if (signal.aborted || current.signal.aborted) return
+      if (signal.aborted || current.signal.aborted) return false
       console.warn(`Could not load GitHub avatar @${username}.`, error)
+      return false
     }
   }
   function modelUsername(username: string | null) {
@@ -200,6 +202,7 @@ export function createDoomAvatar(
   if (initial !== null) void select(initial)
   return {
     clear,
+    select,
     render(context: CanvasRenderingContext2D) {
       gameplay = !paused && isDoomGameplay(context)
       if (!gameplay) {

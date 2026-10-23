@@ -35,7 +35,7 @@ export function Navigation() {
     : pathname === sitePath(href) || pathname.startsWith(`${sitePath(href)}/`)
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-border/80 bg-background/90 backdrop-blur-xl">
+    <nav className="top-0 z-50 w-full border-b border-border/80 bg-background/90 backdrop-blur-xl lg:sticky">
       <div className="container flex h-[4.5rem] items-center justify-between gap-6">
         <a href={sitePath('/')} className="group flex shrink-0 items-center gap-3" aria-label="Badger home">
           <img src={sitePath('/favicon.svg')} alt="" className="h-9 w-9 transition-transform duration-200 group-hover:rotate-[-6deg]" />
